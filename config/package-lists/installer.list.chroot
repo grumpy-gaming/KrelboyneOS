@@ -1,2 +1,7 @@
 calamares
 calamares-settings-debian
+grub-efi
+grub-pc-bin
+efibootmgr
+os-prober
+dosfstools
