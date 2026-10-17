@@ -1,0 +1,5 @@
+# Non-free firmware for real hardware
+firmware-iwlwifi
+firmware-sof-signed
+firmware-misc-nonfree
+firmware-realtek
