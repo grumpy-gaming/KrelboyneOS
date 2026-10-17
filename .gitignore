@@ -12,3 +12,5 @@ config/bootstrap
 config/chroot
 config/common
 config/source
+binary.modified_timestamps
+chroot.packages.*
