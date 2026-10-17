@@ -1,0 +1,46 @@
+#!/bin/bash
+# KrelboyneOS extra tools installer
+
+install_metasploit() {
+  echo "== Metasploit =="
+  curl -fsSL https://raw.githubusercontent.com/rapid7/metasploit-omnibus/master/config/templates/metasploit-framework-wrappers/msfupdate.erb > /tmp/msfinstall
+  chmod 755 /tmp/msfinstall
+  sudo /tmp/msfinstall
+  rm -f /tmp/msfinstall
+}
+
+install_bloodhound() {
+  echo "== BloodHound CE =="
+  sudo systemctl start docker
+  mkdir -p ~/bloodhound
+  cd ~/bloodhound || return
+  wget https://github.com/SpecterOps/bloodhound-cli/releases/latest/download/bloodhound-cli-linux-amd64.tar.gz
+  tar -xvzf bloodhound-cli-linux-amd64.tar.gz
+  sudo ./bloodhound-cli install
+  echo "Save the admin password above. Then open http://localhost:8080/ui/login"
+}
+
+install_burp() {
+  echo "== Burp Suite Community =="
+  echo "Opening the PortSwigger download page. Run the installer you download."
+  xdg-open https://portswigger.net/burp/releases/community/latest
+}
+
+while true; do
+  echo
+  echo "KrelboyneOS extra tools"
+  echo "  1) Metasploit Framework"
+  echo "  2) BloodHound CE (needs 8 GB RAM)"
+  echo "  3) Burp Suite Community"
+  echo "  4) All of the above"
+  echo "  q) Quit"
+  read -rp "Pick one: " choice
+  case "$choice" in
+    1) install_metasploit ;;
+    2) install_bloodhound ;;
+    3) install_burp ;;
+    4) install_metasploit; install_bloodhound; install_burp ;;
+    q|Q) break ;;
+    *) echo "Not a valid choice." ;;
+  esac
+done

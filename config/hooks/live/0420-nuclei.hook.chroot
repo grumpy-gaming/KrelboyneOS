@@ -1,0 +1,7 @@
+#!/bin/sh
+set -e
+URL=$(curl -fsSL https://api.github.com/repos/projectdiscovery/nuclei/releases/latest | grep browser_download_url | grep linux_amd64 | cut -d '"' -f 4)
+curl -fL -o /tmp/nuclei.zip "$URL"
+unzip -o /tmp/nuclei.zip nuclei -d /usr/local/bin
+chmod 755 /usr/local/bin/nuclei
+rm /tmp/nuclei.zip

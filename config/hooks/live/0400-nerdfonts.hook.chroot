@@ -1,0 +1,10 @@
+#!/bin/sh
+set -e
+D=/usr/local/share/fonts/NerdFonts
+for F in JetBrainsMono FiraCode; do
+  mkdir -p $D/$F
+  curl -fL -o /tmp/$F.tar.xz https://github.com/ryanoasis/nerd-fonts/releases/latest/download/$F.tar.xz
+  tar -xJf /tmp/$F.tar.xz -C $D/$F
+  rm /tmp/$F.tar.xz
+done
+fc-cache -f
