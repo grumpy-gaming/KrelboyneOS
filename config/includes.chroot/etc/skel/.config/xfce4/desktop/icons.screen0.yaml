@@ -21,3 +21,6 @@ configs:
     "trash:///":
       row: 6
       col: 11
+    "/home/grumpy/Desktop/calamares-install-debian.desktop":
+      row: 2
+      col: 11
