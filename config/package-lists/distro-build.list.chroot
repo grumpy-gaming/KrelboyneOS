@@ -1,0 +1,11 @@
+# Tools for building KrelboyneOS from KrelboyneOS
+live-build
+debootstrap
+xorriso
+squashfs-tools
+imagemagick
+gh
+# Keyring so apps can save sign-ins
+gnome-keyring
+# Needed by Claude Desktop's Cowork tab
+virtiofsd
