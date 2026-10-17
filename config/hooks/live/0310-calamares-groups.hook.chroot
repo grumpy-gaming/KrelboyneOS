@@ -1,0 +1,3 @@
+#!/bin/sh
+set -e
+sed -i -e '/^    - bluetooth/a\    - docker' -e '/^    - bluetooth/a\    - libvirt' -e '/^    - bluetooth/a\    - wireshark' /etc/calamares/modules/users.conf
