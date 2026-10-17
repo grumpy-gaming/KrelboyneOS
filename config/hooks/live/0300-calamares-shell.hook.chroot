@@ -1,3 +1,4 @@
 #!/bin/sh
 set -e
 printf '\nuser:\n    shell: /usr/bin/zsh\n' >> /etc/calamares/modules/users.conf
+printf '\nhostname:\n    template: "krelboyneos"\n' >> /etc/calamares/modules/users.conf
