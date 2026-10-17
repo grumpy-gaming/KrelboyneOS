@@ -1,0 +1,4 @@
+#!/bin/sh
+set -e
+echo '' >> /etc/skel/.zshrc
+echo '[ -f ~/.krelboyneos-prompt.zsh ] && . ~/.krelboyneos-prompt.zsh' >> /etc/skel/.zshrc
