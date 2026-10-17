@@ -1,0 +1,13 @@
+#!/bin/sh
+set -e
+curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft.gpg
+cat > /etc/apt/sources.list.d/vscode.sources <<'REPO'
+Types: deb
+URIs: https://packages.microsoft.com/repos/code
+Suites: stable
+Components: main
+Architectures: amd64
+Signed-By: /usr/share/keyrings/microsoft.gpg
+REPO
+apt-get update
+apt-get install -y code
