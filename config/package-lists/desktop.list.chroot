@@ -1,0 +1,18 @@
+# Xfce desktop and everyday apps
+xorg
+xfce4
+xfce4-goodies
+xfce4-genmon-plugin
+xfce4-whiskermenu-plugin
+lightdm
+lightdm-gtk-greeter
+network-manager-gnome
+firefox-esr
+conky-all
+
+# Look and feel (dark theme, icons, fonts)
+arc-theme
+papirus-icon-theme
+fonts-firacode
+fonts-powerline
+fonts-noto-color-emoji

@@ -1,0 +1,47 @@
+# Compilers and build tools
+build-essential
+cmake
+ninja-build
+pkg-config
+gdb
+clang
+
+# Version control
+git
+git-lfs
+
+# Languages and runtimes
+python3
+python3-pip
+python3-venv
+pipx
+nodejs
+npm
+
+# Databases and containers
+postgresql
+postgresql-client
+sqlite3
+docker.io
+docker-compose
+
+# Shell and terminal tools
+zsh
+zsh-autosuggestions
+zsh-syntax-highlighting
+tmux
+neovim
+vim
+curl
+wget
+jq
+ripgrep
+fd-find
+fzf
+bat
+htop
+btop
+tree
+unzip
+zip
+openssh-client

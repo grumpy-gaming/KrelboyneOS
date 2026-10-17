@@ -1,0 +1,13 @@
+#!/bin/sh
+
+set -e
+
+lb config noauto \
+	--distribution trixie \
+	--architectures amd64 \
+	--image-name krelboyneos \
+	--iso-application "KrelboyneOS" \
+	--iso-volume "KrelboyneOS" \
+	--iso-publisher "KrelboyneOS" \
+	--bootappend-live "boot=live components username=grumpy hostname=krelboyneos live-config.user-fullname=Grumpy" \
+	"${@}"

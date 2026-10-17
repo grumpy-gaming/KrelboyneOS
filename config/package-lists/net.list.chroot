@@ -1,0 +1,21 @@
+# Network analysis and testing
+wireshark
+tshark
+nmap
+tcpdump
+netcat-openbsd
+mtr-tiny
+traceroute
+whois
+bind9-dnsutils
+iperf3
+openvpn
+wireguard-tools
+
+# Security lab extras (for your own lab machines and HTB-style practice)
+aircrack-ng
+john
+hashcat
+hydra
+sqlmap
+gobuster

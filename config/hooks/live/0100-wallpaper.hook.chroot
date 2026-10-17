@@ -1,0 +1,4 @@
+#!/bin/sh
+set -e
+update-alternatives --install /usr/share/images/desktop-base/desktop-background desktop-background /usr/share/backgrounds/krelboyneos/wallpaper.jpg 100
+update-alternatives --set desktop-background /usr/share/backgrounds/krelboyneos/wallpaper.jpg
