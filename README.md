@@ -23,8 +23,8 @@ It started as a Linux From Scratch idea and became a Debian-based distro, so the
 
 **Shell and terminal**
 - zsh with Oh My Zsh, autosuggestions, syntax highlighting and a two-line prompt
-- zoxide, fzf, ripgrep, fd, bat, tmux, neovim, vim, jq, htop, btop
-- Alacritty and Kitty terminals, JetBrainsMono and FiraCode Nerd Fonts
+- zoxide, fzf, ripgrep, fd, bat, tmux, neovim, jq, htop, btop
+- Kitty terminal, JetBrainsMono and FiraCode Nerd Fonts
 
 **Development**
 - git, git-lfs, lazygit, GitHub CLI
@@ -39,7 +39,7 @@ It started as a Linux From Scratch idea and became a Debian-based distro, so the
 - nmap, Wireshark and tshark, tcpdump, netcat, mtr, traceroute, whois, dig, iperf3
 - OpenVPN and WireGuard
 - aircrack-ng, John the Ripper, hashcat, Hydra, sqlmap, gobuster, Nuclei
-- Metasploit, BloodHound CE and Burp Suite Community install on demand with the `kos-install-tools` command
+- Metasploit, BloodHound CE and Burp Suite Community planned: install on demand with the `kos-install-tools` command
 
 **Everyday apps**
 - Firefox ESR, GIMP, Claude Desktop
