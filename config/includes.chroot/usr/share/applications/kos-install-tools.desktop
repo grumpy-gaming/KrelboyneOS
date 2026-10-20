@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Install KOS Tools
+Comment=Install Bruno, Metasploit, BloodHound CE and Burp Suite
+Exec=kos-install-tools
+Icon=system-software-install
+Terminal=true
+Categories=System;Security;

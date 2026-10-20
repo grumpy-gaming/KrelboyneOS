@@ -1,0 +1,8 @@
+[Plymouth Theme]
+Name=KrelboyneOS
+Description=KrelboyneOS boot splash
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/krelboyneos
+ScriptFile=/usr/share/plymouth/themes/krelboyneos/krelboyneos.script

@@ -1,0 +1,105 @@
+# KrelboyneOS boot splash (Plymouth "script" plugin)
+# Background picture, a progress bar, boot messages and the disk password box.
+
+Window.SetBackgroundTopColor(0.01, 0.02, 0.06);
+Window.SetBackgroundBottomColor(0.01, 0.02, 0.06);
+
+screen.x = Window.GetX();
+screen.y = Window.GetY();
+screen.w = Window.GetWidth();
+screen.h = Window.GetHeight();
+
+fun max(a, b) {
+    if (a > b) return a;
+    return b;
+}
+
+#------------------------------- Background ----------------------------------------
+# Fill the screen and keep the picture's shape (the edges get cropped if needed)
+bg.image = Image("background.png");
+bg.scale = max(screen.w / bg.image.GetWidth(), screen.h / bg.image.GetHeight());
+bg.w = Math.Int(bg.image.GetWidth() * bg.scale);
+bg.h = Math.Int(bg.image.GetHeight() * bg.scale);
+bg.sprite = Sprite(bg.image.Scale(bg.w, bg.h));
+bg.sprite.SetPosition(screen.x + (screen.w - bg.w) / 2, screen.y + (screen.h - bg.h) / 2, -100);
+
+#------------------------------- Progress bar --------------------------------------
+bar.w = Math.Int(screen.w / 4);
+bar.h = 4;
+bar.x = screen.x + Math.Int((screen.w - bar.w) / 2);
+bar.y = screen.y + Math.Int(screen.h * 0.7);
+bar.track = Sprite(Image("bar_track.png").Scale(bar.w, bar.h));
+bar.track.SetPosition(bar.x, bar.y, 1);
+bar.fill_image = Image("bar_fill.png");
+bar.fill = Sprite();
+bar.fill.SetPosition(bar.x, bar.y, 2);
+bar.shown = 0;
+
+fun progress_callback(duration, progress) {
+    w = Math.Int(global.bar.w * progress);
+    if (w > 0 && w != global.bar.shown) {
+        global.bar.fill.SetImage(global.bar.fill_image.Scale(w, global.bar.h));
+        global.bar.shown = w;
+    }
+}
+Plymouth.SetBootProgressFunction(progress_callback);
+
+#------------------------------- Messages ------------------------------------------
+message.sprite = Sprite();
+message.sprite.SetY(screen.y + Math.Int(screen.h * 0.8));
+message.sprite.SetZ(3);
+
+fun message_callback(text) {
+    image = Image.Text(text, 0.75, 0.85, 0.9);
+    global.message.sprite.SetImage(image);
+    global.message.sprite.SetX(global.screen.x + (global.screen.w - image.GetWidth()) / 2);
+}
+Plymouth.SetMessageFunction(message_callback);
+
+#------------------------------- Password box --------------------------------------
+# Shown when an encrypted disk needs its password
+password.entry_image = Image("entry.png");
+password.bullet_image = Image("bullet.png");
+password.x = screen.x + Math.Int((screen.w - password.entry_image.GetWidth()) / 2);
+password.y = screen.y + Math.Int(screen.h * 0.55);
+password.entry = Sprite(password.entry_image);
+password.entry.SetPosition(password.x, password.y, 10);
+password.prompt = Sprite();
+password.made = 0;
+password.count = 0;
+
+fun set_password_opacity(opacity) {
+    global.password.entry.SetOpacity(opacity);
+    global.password.prompt.SetOpacity(opacity);
+    for (i = 0; i < global.password.made; i++) {
+        if (i < global.password.count) global.password.dots[i].SetOpacity(opacity);
+        else global.password.dots[i].SetOpacity(0);
+    }
+}
+
+fun display_password_callback(prompt, bullets) {
+    prompt_image = Image.Text(prompt, 1, 1, 1);
+    global.password.prompt.SetImage(prompt_image);
+    global.password.prompt.SetPosition(global.screen.x + (global.screen.w - prompt_image.GetWidth()) / 2,
+                                       global.password.y - prompt_image.GetHeight() - 10, 10);
+    # One dot per typed character, as many as fit in the box
+    limit = Math.Int((global.password.entry_image.GetWidth() - 24) / 14);
+    if (bullets > limit) bullets = limit;
+    while (global.password.made < bullets) {
+        i = global.password.made;
+        global.password.dots[i] = Sprite(global.password.bullet_image);
+        global.password.dots[i].SetPosition(global.password.x + 12 + i * 14,
+            global.password.y + (global.password.entry_image.GetHeight() - global.password.bullet_image.GetHeight()) / 2, 11);
+        global.password.made++;
+    }
+    global.password.count = bullets;
+    set_password_opacity(1);
+}
+Plymouth.SetDisplayPasswordFunction(display_password_callback);
+
+fun display_normal_callback() {
+    set_password_opacity(0);
+}
+Plymouth.SetDisplayNormalFunction(display_normal_callback);
+
+set_password_opacity(0);

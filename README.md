@@ -18,7 +18,7 @@ It started as a Linux From Scratch idea and became a Debian-based distro, so the
 
 **Desktop and look**
 - Xfce on LightDM with the Arc-Dark theme and Papirus icons
-- Dark teal KrelboyneOS branding on the boot menu, installer, login screen and desktop
+- Dark teal KrelboyneOS branding on the boot menus, boot splash, installer, login screen and desktop
 - conky system monitor on the desktop
 
 **Shell and terminal**
@@ -39,7 +39,7 @@ It started as a Linux From Scratch idea and became a Debian-based distro, so the
 - nmap, Wireshark and tshark, tcpdump, netcat, mtr, traceroute, whois, dig, iperf3
 - OpenVPN and WireGuard
 - aircrack-ng, John the Ripper, hashcat, Hydra, sqlmap, gobuster, Nuclei
-- Bruno, Metasploit, BloodHound CE and Burp Suite Community install on demand with the `kos-install-tools` command
+- Bruno, Metasploit, BloodHound CE and Burp Suite Community install on demand with the `kos-install-tools` command (Install KOS Tools in the System menu)
 
 **Everyday apps**
 - Firefox ESR, GIMP, Claude Desktop
