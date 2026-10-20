@@ -15,3 +15,5 @@ config/source
 binary.modified_timestamps
 chroot.packages.*
 wget-log*
+.lock
+chroot.installed_tmp_pkgs
