@@ -39,7 +39,7 @@ It started as a Linux From Scratch idea and became a Debian-based distro, so the
 - nmap, Wireshark and tshark, tcpdump, netcat, mtr, traceroute, whois, dig, iperf3
 - OpenVPN and WireGuard
 - aircrack-ng, John the Ripper, hashcat, Hydra, sqlmap, gobuster, Nuclei
-- Metasploit, BloodHound CE and Burp Suite Community planned: install on demand with the `kos-install-tools` command
+- Metasploit, BloodHound CE and Burp Suite Community (planned) install on demand with the `kos-install-tools` command
 
 **Everyday apps**
 - Firefox ESR, GIMP, Claude Desktop
