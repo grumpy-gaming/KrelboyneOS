@@ -31,7 +31,6 @@ zsh-autosuggestions
 zsh-syntax-highlighting
 tmux
 neovim
-vim
 curl
 wget
 jq

@@ -8,6 +8,7 @@ cat >> /etc/skel/.zshrc << 'ZEOF'
 # Debian packages for suggestions and highlighting
 [ -f /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh ] && . /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh
 [ -f /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ] && . /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+alias vim='nvim'
 ZEOF
 [ -f /etc/default/useradd ] && sed -i 's|^SHELL=.*|SHELL=/usr/bin/zsh|' /etc/default/useradd
 [ -f /etc/adduser.conf ] && sed -i 's|^DSHELL=.*|DSHELL=/usr/bin/zsh|' /etc/adduser.conf
