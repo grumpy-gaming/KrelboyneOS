@@ -39,7 +39,7 @@ It started as a Linux From Scratch idea and became a Debian-based distro, so the
 - nmap, Wireshark and tshark, tcpdump, netcat, mtr, traceroute, whois, dig, iperf3
 - OpenVPN and WireGuard
 - aircrack-ng, John the Ripper, hashcat, Hydra, sqlmap, gobuster, Nuclei
-- Bruno, Metasploit, BloodHound CE and Burp Suite Community install on demand with the `kos-install-tools` command (Install KOS Tools in the System menu)
+- Bruno, Metasploit, BloodHound CE and Burp Suite Community install on demand from the KOS Software app (System menu), which also updates the system and opens GNOME Software for everything else
 
 **Everyday apps**
 - Firefox ESR, GIMP, Claude Desktop

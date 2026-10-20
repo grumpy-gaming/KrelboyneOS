@@ -1,0 +1,339 @@
+#!/usr/bin/python3
+# KOS Software: install the curated KrelboyneOS tools, update the system,
+# or open GNOME Software for everything else.
+#   Tool list:       /usr/share/kos-software/tools.ini
+#   Install recipes: kos-install-tools
+import configparser
+import os
+import subprocess
+import threading
+
+import gi
+
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gdk, GdkPixbuf, GLib, Gtk
+
+TOOLS_FILE = os.environ.get("KOS_TOOLS_FILE", "/usr/share/kos-software/tools.ini")
+INSTALLER = os.environ.get("KOS_INSTALLER", "kos-install-tools")
+ASKPASS = "/usr/local/bin/kos-askpass"
+LOGO = "/usr/share/krelboyneos/branding/logo.png"
+
+# KOS teal on the dark theme
+CSS = b"""
+.kos-name { font-weight: bold; font-size: 1.1em; }
+.kos-dim { opacity: 0.7; }
+.kos-installed { color: #3fd0ef; font-weight: bold; }
+.kos-failed { color: #ef6b6b; font-weight: bold; }
+button.kos-accent { background-image: none; background-color: #1f7f99; color: #ffffff; }
+button.kos-accent:hover { background-color: #3fd0ef; color: #03060f; }
+stacksidebar row:selected { background-color: #1f7f99; color: #ffffff; }
+"""
+
+
+class Tool:
+    def __init__(self, key, section):
+        self.key = key
+        self.group = section.get("group", "Other")
+        self.method = section.get("method", "apt")
+        self.package = section.get("package", key if self.method == "apt" else "")
+        self.name = section.get("name", self.package or key)
+        self.description = section.get("description", "")
+        self.check = os.path.expanduser(section.get("check", ""))
+        self.message = section.get("message", "")
+
+    def command(self):
+        if self.method == "apt":
+            return [INSTALLER, "apt", self.package]
+        return [INSTALLER, "install", self.key]
+
+
+def load_tools():
+    parser = configparser.ConfigParser(interpolation=None)
+    parser.read(TOOLS_FILE)
+    return [Tool(key, parser[key]) for key in parser.sections()]
+
+
+def installed_packages(packages):
+    """The packages from this list that dpkg says are installed."""
+    if not packages:
+        return set()
+    out = subprocess.run(["dpkg-query", "-W", "-f", "${Package}\t${db:Status-Abbrev}\n", *packages],
+                         capture_output=True, text=True).stdout
+    return {line.split("\t")[0] for line in out.splitlines() if "\tii" in line}
+
+
+def package_summaries(packages):
+    """Debian's one-line description for each package apt knows about."""
+    if not packages:
+        return {}
+    out = subprocess.run(["apt-cache", "show", "--no-all-versions", *packages],
+                         capture_output=True, text=True).stdout
+    summaries, name = {}, None
+    for line in out.splitlines():
+        if line.startswith("Package: "):
+            name = line[9:].strip()
+        elif line.startswith(("Description: ", "Description-en: ")) and name:
+            summaries[name] = line.split(": ", 1)[1].strip()
+    return summaries
+
+
+class ToolRow(Gtk.ListBoxRow):
+    def __init__(self, tool, window):
+        super().__init__(activatable=False, selectable=False)
+        self.tool = tool
+        self.window = window
+
+        box = Gtk.Box(spacing=12, margin=12)
+        text = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
+        name = Gtk.Label(label=tool.name, xalign=0)
+        name.get_style_context().add_class("kos-name")
+        self.description = Gtk.Label(xalign=0, wrap=True)
+        self.description.get_style_context().add_class("kos-dim")
+        text.pack_start(name, False, False, 0)
+        text.pack_start(self.description, False, False, 0)
+        box.pack_start(text, True, True, 0)
+
+        self.status = Gtk.Box(spacing=6, valign=Gtk.Align.CENTER)
+        box.pack_end(self.status, False, False, 0)
+        self.add(box)
+
+    def show_state(self, state, description):
+        self.description.set_text(description or "")
+        for child in self.status.get_children():
+            child.destroy()
+
+        if state == "installed":
+            self.add_label("✓ Installed", "kos-installed")
+        elif state == "unavailable":
+            self.add_label("Not available", "kos-dim")
+        elif state == "installing":
+            spinner = Gtk.Spinner()
+            spinner.start()
+            self.status.pack_start(spinner, False, False, 0)
+            self.add_label("Installing…", None)
+        else:
+            if state == "failed":
+                self.add_label("Failed", "kos-failed")
+            button = Gtk.Button(label="Try again" if state == "failed" else "Install")
+            button.get_style_context().add_class("kos-accent")
+            button.set_sensitive(not self.window.busy)
+            button.connect("clicked", lambda _b: self.window.install(self.tool))
+            self.status.pack_start(button, False, False, 0)
+        self.status.show_all()
+
+    def add_label(self, text, style):
+        label = Gtk.Label(label=text)
+        if style:
+            label.get_style_context().add_class(style)
+        self.status.pack_start(label, False, False, 0)
+
+
+class KosSoftware(Gtk.Window):
+    def __init__(self, tools):
+        super().__init__(title="KOS Software")
+        self.set_default_size(860, 620)
+        self.tools = tools
+        self.rows = []
+        self.busy = False
+        self.installing = None
+        self.failed = set()
+        self.installed = set()
+        self.summaries = {}
+
+        header = Gtk.HeaderBar(title="KOS Software", subtitle="KrelboyneOS tools", show_close_button=True)
+        header.set_decoration_layout(":minimize,maximize,close")  # our logo replaces the small icon
+        self.set_titlebar(header)
+        try:
+            self.set_icon_from_file(LOGO)
+            logo = GdkPixbuf.Pixbuf.new_from_file_at_scale(LOGO, 32, 32, True)
+            header.pack_start(Gtk.Image.new_from_pixbuf(logo))
+        except GLib.Error:
+            pass
+        browse = Gtk.Button(label="Browse all software")
+        browse.connect("clicked", self.browse_all)
+        header.pack_end(browse)
+        self.update_button = Gtk.Button(label="Update system")
+        self.update_button.connect("clicked", self.update_system)
+        header.pack_end(self.update_button)
+
+        outer = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        self.add(outer)
+
+        # Sidebar with one page per group
+        body = Gtk.Box()
+        stack = Gtk.Stack(transition_type=Gtk.StackTransitionType.CROSSFADE)
+        sidebar = Gtk.StackSidebar(stack=stack)
+        sidebar.set_size_request(180, -1)
+        body.pack_start(sidebar, False, False, 0)
+        body.pack_start(Gtk.Separator(orientation=Gtk.Orientation.VERTICAL), False, False, 0)
+        body.pack_start(stack, True, True, 0)
+        outer.pack_start(body, True, True, 0)
+
+        groups = {}
+        for tool in tools:
+            groups.setdefault(tool.group, []).append(tool)
+        for group, group_tools in groups.items():
+            listbox = Gtk.ListBox(selection_mode=Gtk.SelectionMode.NONE)
+            listbox.set_header_func(self.add_separator)
+            for tool in group_tools:
+                row = ToolRow(tool, self)
+                listbox.add(row)
+                self.rows.append(row)
+            scroll = Gtk.ScrolledWindow(hscrollbar_policy=Gtk.PolicyType.NEVER)
+            scroll.add(listbox)
+            stack.add_titled(scroll, group, group)
+
+        # Hidden install output
+        self.log = Gtk.TextBuffer()
+        self.log_end = self.log.create_mark(None, self.log.get_end_iter(), False)
+        self.log_view = Gtk.TextView(buffer=self.log, editable=False, cursor_visible=False,
+                                     monospace=True, wrap_mode=Gtk.WrapMode.WORD_CHAR)
+        log_scroll = Gtk.ScrolledWindow()
+        log_scroll.set_size_request(-1, 200)
+        log_scroll.add(self.log_view)
+        self.details = Gtk.Expander(label="Show details", margin=8)
+        self.details.add(log_scroll)
+        outer.pack_start(Gtk.Separator(), False, False, 0)
+        outer.pack_start(self.details, False, False, 0)
+
+        self.connect("delete-event", self.on_close)
+        self.refresh()
+
+    @staticmethod
+    def add_separator(row, before):
+        if before and not row.get_header():
+            row.set_header(Gtk.Separator())
+
+    def refresh(self, reload=True):
+        if reload:
+            packages = [t.package for t in self.tools if t.package]
+            self.installed = installed_packages(packages)
+            self.summaries = package_summaries([t.package for t in self.tools if t.method == "apt"])
+        for row in self.rows:
+            row.show_state(self.state_of(row.tool), row.tool.description or self.summaries.get(row.tool.package))
+
+    def state_of(self, tool):
+        if tool.key == self.installing:
+            return "installing"
+        if tool.package in self.installed or (tool.check and os.path.exists(tool.check)):
+            return "installed"
+        if tool.method == "apt" and tool.package not in self.summaries:
+            return "unavailable"
+        if tool.key in self.failed:
+            return "failed"
+        return "available"
+
+    # ---- running kos-install-tools ----
+
+    def run_job(self, title, command, on_done):
+        self.busy = True
+        self.update_button.set_sensitive(False)
+        self.append_log(f"\n== {title} ==\n")
+        env = dict(os.environ, SUDO_ASKPASS=ASKPASS)
+
+        def worker():
+            try:
+                proc = subprocess.Popen(command, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+                                        stderr=subprocess.STDOUT, env=env, text=True, errors="replace")
+                for line in proc.stdout:
+                    GLib.idle_add(self.append_log, line)
+                code = proc.wait()
+            except OSError as error:
+                GLib.idle_add(self.append_log, f"{error}\n")
+                code = 1
+            GLib.idle_add(self.job_finished, code, on_done)
+
+        threading.Thread(target=worker, daemon=True).start()
+
+    def append_log(self, text):
+        self.log.insert(self.log.get_end_iter(), text)
+        self.log_view.scroll_mark_onscreen(self.log_end)
+
+    def job_finished(self, code, on_done):
+        self.busy = False
+        self.update_button.set_sensitive(True)
+        on_done(code)
+
+    def install(self, tool):
+        if self.busy:
+            return
+        self.installing = tool.key
+        self.failed.discard(tool.key)
+        self.run_job(tool.name, tool.command(), lambda code: self.install_done(tool, code))
+        self.refresh(reload=False)
+
+    def install_done(self, tool, code):
+        self.installing = None
+        if code != 0:
+            self.failed.add(tool.key)
+            self.details.set_expanded(True)
+        self.refresh()
+        if code != 0:
+            self.message(f"{tool.name} could not be installed.", "The details at the bottom show what went wrong.",
+                         Gtk.MessageType.ERROR)
+        elif tool.message:
+            self.details.set_expanded(True)
+            self.message(f"{tool.name} is installed.", tool.message)
+
+    def update_system(self, _button):
+        if self.busy:
+            return
+        self.update_button.set_label("Updating…")
+        self.run_job("Update system", [INSTALLER, "update"], self.update_done)
+        self.refresh(reload=False)
+
+    def update_done(self, code):
+        self.update_button.set_label("Update system")
+        self.refresh()
+        if code == 0:
+            self.message("Your system is up to date.")
+        else:
+            self.details.set_expanded(True)
+            self.message("The update did not finish.", "The details at the bottom show what went wrong.",
+                         Gtk.MessageType.ERROR)
+
+    # ---- other buttons and dialogs ----
+
+    def browse_all(self, _button):
+        try:
+            subprocess.Popen(["gnome-software"])
+        except OSError:
+            self.message("GNOME Software is not installed.", kind=Gtk.MessageType.ERROR)
+
+    def on_close(self, *_args):
+        if self.busy:
+            self.message("Please wait until it finishes.",
+                         "Closing KOS Software now could leave the install half done.")
+            return True
+        return False
+
+    def message(self, text, secondary=None, kind=Gtk.MessageType.INFO):
+        dialog = Gtk.MessageDialog(transient_for=self, modal=True, message_type=kind,
+                                   buttons=Gtk.ButtonsType.OK, text=text)
+        if secondary:
+            dialog.format_secondary_text(secondary)
+        dialog.run()
+        dialog.destroy()
+
+
+def main():
+    css = Gtk.CssProvider()
+    css.load_from_data(CSS)
+    Gtk.StyleContext.add_provider_for_screen(Gdk.Screen.get_default(), css,
+                                             Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+    Gtk.Settings.get_default().set_property("gtk-application-prefer-dark-theme", True)
+
+    tools = load_tools()
+    if not tools:
+        dialog = Gtk.MessageDialog(message_type=Gtk.MessageType.ERROR, buttons=Gtk.ButtonsType.OK,
+                                   text=f"No tools found in {TOOLS_FILE}")
+        dialog.run()
+        return
+    window = KosSoftware(tools)
+    window.connect("destroy", Gtk.main_quit)
+    window.show_all()
+    Gtk.main()
+
+
+if __name__ == "__main__":
+    main()

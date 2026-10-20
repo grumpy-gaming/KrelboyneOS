@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=KOS Software
+Comment=Install KrelboyneOS tools and update the system
+Exec=kos-software
+Icon=/usr/share/krelboyneos/branding/logo.png
+Terminal=false
+Categories=System;PackageManager;

@@ -1,0 +1,46 @@
+#!/usr/bin/python3
+# Password window for sudo, used by KOS Software through SUDO_ASKPASS.
+# sudo runs this and reads the password from its output; nothing is stored.
+import getpass
+import sys
+
+import gi
+
+gi.require_version("Gtk", "3.0")
+from gi.repository import GdkPixbuf, GLib, Gtk
+
+LOGO = "/usr/share/krelboyneos/branding/logo.png"
+
+dialog = Gtk.Dialog(title="KOS Software")
+dialog.add_buttons("Cancel", Gtk.ResponseType.CANCEL, "OK", Gtk.ResponseType.OK)
+dialog.set_default_response(Gtk.ResponseType.OK)
+dialog.set_position(Gtk.WindowPosition.CENTER)
+dialog.set_keep_above(True)
+dialog.set_resizable(False)
+
+box = Gtk.Box(spacing=16, margin=16)
+try:
+    logo = GdkPixbuf.Pixbuf.new_from_file_at_scale(LOGO, 64, 64, True)
+    box.pack_start(Gtk.Image.new_from_pixbuf(logo), False, False, 0)
+    dialog.set_icon_from_file(LOGO)
+except GLib.Error:
+    pass
+
+text = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+title = Gtk.Label(xalign=0)
+title.set_markup("<b>Administrator password needed</b>")
+text.pack_start(title, False, False, 0)
+text.pack_start(Gtk.Label(label=f"Enter the password for {getpass.getuser()} to continue.", xalign=0),
+                False, False, 0)
+entry = Gtk.Entry(visibility=False, activates_default=True, width_chars=28)
+text.pack_start(entry, False, False, 0)
+box.pack_start(text, True, True, 0)
+
+dialog.get_content_area().add(box)
+dialog.show_all()
+entry.grab_focus()
+
+if dialog.run() == Gtk.ResponseType.OK:
+    print(entry.get_text())
+    sys.exit(0)
+sys.exit(1)

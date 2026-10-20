@@ -1,18 +1,39 @@
 #!/bin/bash
 # KrelboyneOS extra tools installer
+#   kos-install-tools                  menu in the terminal
+#   kos-install-tools install <tool>   install one tool (KOS Software uses this)
+#   kos-install-tools apt <package>    install a Debian package
+#   kos-install-tools update           update the whole system
 # Each step ends with "|| return 1" so a failed step stops that tool and reports it.
 set -o pipefail
 
+DEV_TOOLS=(bruno)
+SEC_TOOLS=(metasploit bloodhound burp)
+
+# KOS Software sets SUDO_ASKPASS so sudo asks for the password in a window.
+# Nothing is piped into sudo, so the password is only asked once per install.
+sudo() {
+  if [ -n "$SUDO_ASKPASS" ]; then command sudo -A "$@"; else command sudo "$@"; fi
+}
+
+# apt-get that never stops to ask questions
+apt_get() {
+  sudo env DEBIAN_FRONTEND=noninteractive apt-get -y \
+    -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold "$@"
+}
+
 install_bruno() {
   echo "== Bruno =="
-  sudo mkdir -p /etc/apt/keyrings || return 1
+  local tmp
+  tmp=$(mktemp -d) || return 1
   curl -fsSL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x9FA6017ECABE0266" \
-    | gpg --dearmor | sudo tee /etc/apt/keyrings/bruno.gpg > /dev/null || return 1
-  sudo chmod 644 /etc/apt/keyrings/bruno.gpg || return 1
-  echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/bruno.gpg] http://debian.usebruno.com/ bruno stable" \
-    | sudo tee /etc/apt/sources.list.d/bruno.list > /dev/null || return 1
-  sudo apt-get update || return 1
-  sudo apt-get install -y bruno || return 1
+    | gpg --dearmor > "$tmp/bruno.gpg" || { rm -rf "$tmp"; return 1; }
+  echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/bruno.gpg] http://debian.usebruno.com/ bruno stable" > "$tmp/bruno.list"
+  sudo install -D -m 644 "$tmp/bruno.gpg" /etc/apt/keyrings/bruno.gpg || { rm -rf "$tmp"; return 1; }
+  sudo install -m 644 "$tmp/bruno.list" /etc/apt/sources.list.d/bruno.list || { rm -rf "$tmp"; return 1; }
+  rm -rf "$tmp"
+  apt_get update || return 1
+  apt_get install bruno || return 1
 }
 
 install_metasploit() {
@@ -39,14 +60,25 @@ install_bloodhound() {
 
 install_burp() {
   echo "== Burp Suite Community =="
-  local tmp
+  local tmp progress=--progress-bar
+  [ -t 2 ] || progress=-sS   # no progress bar when KOS Software shows the output
   tmp=$(mktemp -d) || return 1
   echo "Downloading the installer (about 400 MB)..."
-  curl -fL --progress-bar "https://portswigger.net/burp/releases/download?product=community&type=Linux" -o "$tmp/burp-installer.sh" || { rm -rf "$tmp"; return 1; }
+  curl -fL $progress "https://portswigger.net/burp/releases/download?product=community&type=Linux" -o "$tmp/burp-installer.sh" || { rm -rf "$tmp"; return 1; }
   # -q = unattended install into your home folder, with a menu entry
   sh "$tmp/burp-installer.sh" -q || { rm -rf "$tmp"; return 1; }
   rm -rf "$tmp"
   echo "Burp Suite is in your applications menu."
+}
+
+tool_label() {
+  case "$1" in
+    bruno) echo "Bruno (API client)" ;;
+    metasploit) echo "Metasploit Framework" ;;
+    bloodhound) echo "BloodHound CE (needs 8 GB RAM)" ;;
+    burp) echo "Burp Suite Community" ;;
+    *) echo "$1" ;;
+  esac
 }
 
 # Run one installer and report the result
@@ -58,27 +90,77 @@ run() {
   fi
 }
 
-if ! curl -fsS --max-time 10 -o /dev/null https://deb.debian.org; then
-  echo "No internet connection. Connect to a network and try again."
-  exit 1
-fi
+check_network() {
+  if ! curl -fsS --max-time 10 -o /dev/null https://deb.debian.org; then
+    echo "No internet connection. Connect to a network and try again."
+    return 1
+  fi
+}
+
+# Menu for one group: $1 = title, the rest = its tools
+group_menu() {
+  local title=$1 choice i
+  shift
+  local tools=("$@")
+  while true; do
+    echo
+    echo "$title"
+    for i in "${!tools[@]}"; do
+      echo "  $((i + 1))) $(tool_label "${tools[$i]}")"
+    done
+    echo "  a) All ${title,,}"
+    echo "  b) Back"
+    read -rp "Pick one: " choice
+    case "$choice" in
+      a|A) for i in "${tools[@]}"; do run "$i"; done ;;
+      b|B) return ;;
+      *)
+        if [[ "$choice" =~ ^[0-9]+$ ]] && (( choice >= 1 && choice <= ${#tools[@]} )); then
+          run "${tools[$((choice - 1))]}"
+        else
+          echo "Not a valid choice."
+        fi ;;
+    esac
+  done
+}
+
+case "$1" in
+  install)
+    if [ -z "$2" ] || ! declare -F "install_$2" > /dev/null; then
+      echo "Unknown tool: $2"
+      exit 2
+    fi
+    check_network || exit 1
+    "install_$2"
+    exit $? ;;
+  apt)
+    shift
+    [ $# -gt 0 ] || { echo "Usage: kos-install-tools apt <package>..."; exit 2; }
+    check_network || exit 1
+    apt_get update && apt_get install "$@"
+    exit $? ;;
+  update)
+    check_network || exit 1
+    apt_get update && apt_get full-upgrade
+    exit $? ;;
+  "") ;;
+  *)
+    echo "Usage: kos-install-tools [install <tool> | apt <package>... | update]"
+    exit 2 ;;
+esac
+
+check_network || exit 1
 
 while true; do
   echo
   echo "KrelboyneOS extra tools"
-  echo "  1) Bruno (API client)"
-  echo "  2) Metasploit Framework"
-  echo "  3) BloodHound CE (needs 8 GB RAM)"
-  echo "  4) Burp Suite Community"
-  echo "  5) All of the above"
+  echo "  1) Development"
+  echo "  2) Security"
   echo "  q) Quit"
   read -rp "Pick one: " choice
   case "$choice" in
-    1) run bruno ;;
-    2) run metasploit ;;
-    3) run bloodhound ;;
-    4) run burp ;;
-    5) run bruno; run metasploit; run bloodhound; run burp ;;
+    1) group_menu "Development tools" "${DEV_TOOLS[@]}" ;;
+    2) group_menu "Security tools" "${SEC_TOOLS[@]}" ;;
     q|Q) break ;;
     *) echo "Not a valid choice." ;;
   esac
