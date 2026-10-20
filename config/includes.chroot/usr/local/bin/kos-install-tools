@@ -1,45 +1,84 @@
 #!/bin/bash
 # KrelboyneOS extra tools installer
+# Each step ends with "|| return 1" so a failed step stops that tool and reports it.
+set -o pipefail
+
+install_bruno() {
+  echo "== Bruno =="
+  sudo mkdir -p /etc/apt/keyrings || return 1
+  curl -fsSL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x9FA6017ECABE0266" \
+    | gpg --dearmor | sudo tee /etc/apt/keyrings/bruno.gpg > /dev/null || return 1
+  sudo chmod 644 /etc/apt/keyrings/bruno.gpg || return 1
+  echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/bruno.gpg] http://debian.usebruno.com/ bruno stable" \
+    | sudo tee /etc/apt/sources.list.d/bruno.list > /dev/null || return 1
+  sudo apt-get update || return 1
+  sudo apt-get install -y bruno || return 1
+}
 
 install_metasploit() {
   echo "== Metasploit =="
-  curl -fsSL https://raw.githubusercontent.com/rapid7/metasploit-omnibus/master/config/templates/metasploit-framework-wrappers/msfupdate.erb > /tmp/msfinstall
-  chmod 755 /tmp/msfinstall
-  sudo /tmp/msfinstall
-  rm -f /tmp/msfinstall
+  local tmp
+  tmp=$(mktemp -d) || return 1
+  curl -fsSL https://raw.githubusercontent.com/rapid7/metasploit-omnibus/master/config/templates/metasploit-framework-wrappers/msfupdate.erb -o "$tmp/msfinstall" || { rm -rf "$tmp"; return 1; }
+  chmod 755 "$tmp/msfinstall"
+  sudo "$tmp/msfinstall" || { rm -rf "$tmp"; return 1; }
+  rm -rf "$tmp"
 }
 
 install_bloodhound() {
   echo "== BloodHound CE =="
-  sudo systemctl start docker
-  mkdir -p ~/bloodhound
-  cd ~/bloodhound || return
-  wget https://github.com/SpecterOps/bloodhound-cli/releases/latest/download/bloodhound-cli-linux-amd64.tar.gz
-  tar -xvzf bloodhound-cli-linux-amd64.tar.gz
-  sudo ./bloodhound-cli install
+  sudo systemctl start docker || return 1
+  mkdir -p ~/bloodhound || return 1
+  cd ~/bloodhound || return 1
+  curl -fsSL https://github.com/SpecterOps/bloodhound-cli/releases/latest/download/bloodhound-cli-linux-amd64.tar.gz -o bloodhound-cli.tar.gz || return 1
+  tar -xzf bloodhound-cli.tar.gz || return 1
+  rm -f bloodhound-cli.tar.gz
+  sudo ./bloodhound-cli install || return 1
   echo "Save the admin password above. Then open http://localhost:8080/ui/login"
 }
 
 install_burp() {
   echo "== Burp Suite Community =="
-  echo "Opening the PortSwigger download page. Run the installer you download."
-  xdg-open https://portswigger.net/burp/releases/community/latest
+  local tmp
+  tmp=$(mktemp -d) || return 1
+  echo "Downloading the installer (about 400 MB)..."
+  curl -fL --progress-bar "https://portswigger.net/burp/releases/download?product=community&type=Linux" -o "$tmp/burp-installer.sh" || { rm -rf "$tmp"; return 1; }
+  # -q = unattended install into your home folder, with a menu entry
+  sh "$tmp/burp-installer.sh" -q || { rm -rf "$tmp"; return 1; }
+  rm -rf "$tmp"
+  echo "Burp Suite is in your applications menu."
 }
+
+# Run one installer and report the result
+run() {
+  if "install_$1"; then
+    echo "Done: $1"
+  else
+    echo "FAILED: $1 (see the messages above)"
+  fi
+}
+
+if ! curl -fsS --max-time 10 -o /dev/null https://deb.debian.org; then
+  echo "No internet connection. Connect to a network and try again."
+  exit 1
+fi
 
 while true; do
   echo
   echo "KrelboyneOS extra tools"
-  echo "  1) Metasploit Framework"
-  echo "  2) BloodHound CE (needs 8 GB RAM)"
-  echo "  3) Burp Suite Community"
-  echo "  4) All of the above"
+  echo "  1) Bruno (API client)"
+  echo "  2) Metasploit Framework"
+  echo "  3) BloodHound CE (needs 8 GB RAM)"
+  echo "  4) Burp Suite Community"
+  echo "  5) All of the above"
   echo "  q) Quit"
   read -rp "Pick one: " choice
   case "$choice" in
-    1) install_metasploit ;;
-    2) install_bloodhound ;;
-    3) install_burp ;;
-    4) install_metasploit; install_bloodhound; install_burp ;;
+    1) run bruno ;;
+    2) run metasploit ;;
+    3) run bloodhound ;;
+    4) run burp ;;
+    5) run bruno; run metasploit; run bloodhound; run burp ;;
     q|Q) break ;;
     *) echo "Not a valid choice." ;;
   esac

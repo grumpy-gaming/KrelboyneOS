@@ -30,7 +30,7 @@ It started as a Linux From Scratch idea and became a Debian-based distro, so the
 - git, git-lfs, lazygit, GitHub CLI
 - Python 3 (pip, venv, pipx), Node.js and npm, mise for other languages
 - build-essential, cmake, ninja, clang, gdb
-- VS Code, Bruno and httpie for APIs
+- VS Code and httpie for APIs
 - PostgreSQL and SQLite
 - Docker and Docker Compose
 - KVM, QEMU, libvirt and virt-manager
@@ -39,7 +39,7 @@ It started as a Linux From Scratch idea and became a Debian-based distro, so the
 - nmap, Wireshark and tshark, tcpdump, netcat, mtr, traceroute, whois, dig, iperf3
 - OpenVPN and WireGuard
 - aircrack-ng, John the Ripper, hashcat, Hydra, sqlmap, gobuster, Nuclei
-- Metasploit, BloodHound CE and Burp Suite Community (planned) install on demand with the `kos-install-tools` command
+- Bruno, Metasploit, BloodHound CE and Burp Suite Community install on demand with the `kos-install-tools` command
 
 **Everyday apps**
 - Firefox ESR, GIMP, Claude Desktop

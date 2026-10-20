@@ -2,10 +2,6 @@
 set -e
 # mise (official apt repo via extrepo)
 extrepo enable mise
-# Bruno (official apt repo)
-mkdir -p /etc/apt/keyrings
-curl -fsSL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x9FA6017ECABE0266" | gpg --dearmor > /etc/apt/keyrings/bruno.gpg
-chmod 644 /etc/apt/keyrings/bruno.gpg
-echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/bruno.gpg] http://debian.usebruno.com/ bruno stable" > /etc/apt/sources.list.d/bruno.list
 apt-get update
-apt-get install -y mise bruno
+apt-get install -y mise
+# Bruno is installed on demand by kos-install-tools
