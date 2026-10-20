@@ -217,8 +217,6 @@ class KosSoftware(Gtk.Window):
             return "installing"
         if tool.package in self.installed or (tool.check and os.path.exists(tool.check)):
             return "installed"
-        if tool.method == "apt" and tool.package not in self.summaries:
-            return "unavailable"
         if tool.key in self.failed:
             return "failed"
         return "available"

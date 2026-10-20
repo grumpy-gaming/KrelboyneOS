@@ -8,7 +8,7 @@
 set -o pipefail
 
 DEV_TOOLS=(bruno)
-SEC_TOOLS=(metasploit bloodhound burp)
+SEC_TOOLS=(metasploit bloodhound burp subfinder naabu dnsx katana amass chisel ligolo mitm6 theharvester netexec)
 
 # KOS Software sets SUDO_ASKPASS so sudo asks for the password in a window.
 # Nothing is piped into sudo, so the password is only asked once per install.
@@ -70,6 +70,83 @@ install_burp() {
   rm -rf "$tmp"
   echo "Burp Suite is in your applications menu."
 }
+
+# --- Wave 3: Go release binaries and pipx tools ---
+# Uses the github.com "releases/latest" redirect to find the version, not
+# api.github.com (which has a 60/hour limit that breaks unauthenticated builds).
+
+gh_tag() {  # $1 repo -> latest tag, e.g. v2.17.0
+  curl -fsSLI -o /dev/null -w '%{url_effective}' "https://github.com/$1/releases/latest" | sed 's#.*/tag/##'
+}
+
+fetch() {  # $1 url -> $2 file; fails if the download is missing or empty
+  curl -fL "$1" -o "$2" && [ -s "$2" ]
+}
+
+install_pd_zip() {  # ProjectDiscovery-style zip: $1 repo, $2 binary name
+  local tag ver tmp
+  tag=$(gh_tag "$1") && [ -n "$tag" ] || return 1
+  ver=${tag#v}
+  tmp=$(mktemp -d) || return 1
+  fetch "https://github.com/$1/releases/download/$tag/${2}_${ver}_linux_amd64.zip" "$tmp/a.zip" \
+    && unzip -tq "$tmp/a.zip" > /dev/null 2>&1 || { rm -rf "$tmp"; return 1; }
+  sudo unzip -o "$tmp/a.zip" "$2" -d /usr/local/bin && sudo chmod 755 "/usr/local/bin/$2" || { rm -rf "$tmp"; return 1; }
+  rm -rf "$tmp"
+}
+
+install_subfinder() { echo "== subfinder =="; install_pd_zip projectdiscovery/subfinder subfinder; }
+install_naabu()     { echo "== naabu =="; install_pd_zip projectdiscovery/naabu naabu; }
+install_dnsx()      { echo "== dnsx =="; install_pd_zip projectdiscovery/dnsx dnsx; }
+install_katana()    { echo "== katana =="; install_pd_zip projectdiscovery/katana katana; }
+
+install_amass() {
+  echo "== amass =="
+  local tmp bin
+  tmp=$(mktemp -d) || return 1
+  # amass asset name has no version, so latest/download works directly
+  fetch "https://github.com/owasp-amass/amass/releases/latest/download/amass_linux_amd64.tar.gz" "$tmp/a.tgz" \
+    && tar -tzf "$tmp/a.tgz" > /dev/null 2>&1 || { rm -rf "$tmp"; return 1; }
+  tar -xzf "$tmp/a.tgz" -C "$tmp" || { rm -rf "$tmp"; return 1; }
+  bin=$(find "$tmp" -type f -name amass | head -1)
+  [ -n "$bin" ] && sudo install -m 755 "$bin" /usr/local/bin/amass || { rm -rf "$tmp"; return 1; }
+  rm -rf "$tmp"
+}
+
+install_chisel() {
+  echo "== chisel =="
+  local tag ver tmp
+  tag=$(gh_tag jpillora/chisel) && [ -n "$tag" ] || return 1
+  ver=${tag#v}
+  tmp=$(mktemp -d) || return 1
+  fetch "https://github.com/jpillora/chisel/releases/download/$tag/chisel_${ver}_linux_amd64.gz" "$tmp/chisel.gz" \
+    && gunzip -t "$tmp/chisel.gz" > /dev/null 2>&1 || { rm -rf "$tmp"; return 1; }
+  gunzip -c "$tmp/chisel.gz" | sudo tee /usr/local/bin/chisel > /dev/null || { rm -rf "$tmp"; return 1; }
+  sudo chmod 755 /usr/local/bin/chisel
+  rm -rf "$tmp"
+}
+
+install_ligolo() {
+  echo "== ligolo-ng =="
+  local tag ver tmp part bin
+  tag=$(gh_tag nicocha30/ligolo-ng) && [ -n "$tag" ] || return 1
+  ver=${tag#v}
+  tmp=$(mktemp -d) || return 1
+  for part in proxy agent; do
+    fetch "https://github.com/nicocha30/ligolo-ng/releases/download/$tag/ligolo-ng_${part}_${ver}_linux_amd64.tar.gz" "$tmp/$part.tgz" \
+      && tar -tzf "$tmp/$part.tgz" > /dev/null 2>&1 || { rm -rf "$tmp"; return 1; }
+    mkdir -p "$tmp/$part" && tar -xzf "$tmp/$part.tgz" -C "$tmp/$part" || { rm -rf "$tmp"; return 1; }
+    bin=$(find "$tmp/$part" -type f -name "$part" | head -1)
+    [ -n "$bin" ] && sudo install -m 755 "$bin" "/usr/local/bin/ligolo-$part" || { rm -rf "$tmp"; return 1; }
+  done
+  rm -rf "$tmp"
+  echo "Installed ligolo-proxy and ligolo-agent."
+}
+
+# pipx --global installs into /opt/pipx with the commands in /usr/local/bin
+install_pipx() { echo "== $2 =="; sudo pipx install --global "$1"; }
+install_mitm6()        { install_pipx mitm6 mitm6; }
+install_theharvester() { install_pipx theHarvester theHarvester; }
+install_netexec()      { install_pipx "git+https://github.com/Pennyw0rth/NetExec.git" netexec; }
 
 tool_label() {
   case "$1" in

@@ -5,7 +5,7 @@ set -e
 lb config noauto \
 	--distribution trixie \
 	--architectures amd64 \
-	--archive-areas "main non-free-firmware" \
+	--archive-areas "main contrib non-free non-free-firmware" \
 	--image-name krelboyneos \
 	--iso-application "KrelboyneOS" \
 	--iso-volume "KrelboyneOS" \

@@ -1,7 +1,27 @@
 #!/bin/sh
 set -e
-URL=$(curl -fsSL https://api.github.com/repos/projectdiscovery/nuclei/releases/latest | grep browser_download_url | grep linux_amd64 | cut -d '"' -f 4)
-curl -fL -o /tmp/nuclei.zip "$URL"
-unzip -o /tmp/nuclei.zip nuclei -d /usr/local/bin
-chmod 755 /usr/local/bin/nuclei
-rm /tmp/nuclei.zip
+# Install nuclei from its GitHub release. Uses the github.com "releases/latest"
+# redirect to get the version (not api.github.com, whose 60/hour limit can
+# break unauthenticated builds), validates the zip, and retries transient fails.
+repo="projectdiscovery/nuclei"
+
+attempt() {
+  tag=$(curl -fsSLI -o /dev/null -w '%{url_effective}' "https://github.com/$repo/releases/latest" | sed 's#.*/tag/##')
+  [ -n "$tag" ] || return 1
+  ver=${tag#v}
+  curl -fL -o /tmp/nuclei.zip "https://github.com/$repo/releases/download/$tag/nuclei_${ver}_linux_amd64.zip" || return 1
+  unzip -tq /tmp/nuclei.zip > /dev/null 2>&1 || return 1   # reject a non-zip (e.g. an error page)
+  unzip -o /tmp/nuclei.zip nuclei -d /usr/local/bin
+  chmod 755 /usr/local/bin/nuclei
+}
+
+i=1
+while [ "$i" -le 4 ]; do
+  if attempt; then rm -f /tmp/nuclei.zip; exit 0; fi
+  echo "nuclei download attempt $i failed; retrying in 15s..." >&2
+  rm -f /tmp/nuclei.zip
+  i=$((i + 1))
+  sleep 15
+done
+echo "E: could not download nuclei after 4 attempts" >&2
+exit 1
