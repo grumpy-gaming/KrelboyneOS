@@ -99,7 +99,7 @@ The finished ISO, `krelboyneos-amd64.hybrid.iso`, appears in the project folder.
 
 ## Help and support
 
-- Bugs and questions: open an issue on [GitHub Issues](https://github.com/grumpy-gaming/KrelboyneOS/issues)
+- Help, bug reports and known issues: join the [KrelboyneOS Discord](https://discord.gg/hzUZDPwBs7)
 - Email: krelboyneos@gmail.com
 - Like the project? You can [buy me a coffee on Ko-fi](https://ko-fi.com/krelboyneos)
 

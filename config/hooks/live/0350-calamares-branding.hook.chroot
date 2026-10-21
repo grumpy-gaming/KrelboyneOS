@@ -16,8 +16,8 @@ sed -i \
   -e 's|^\( *productIcon:\) .*|\1 "krelboyneos-logo.png"|' \
   -e 's|^\( *productWelcome:\) .*|\1 "krelboyneos-welcome.png"|' \
   -e 's|^\( *productUrl:\) .*|\1 https://github.com/grumpy-gaming/KrelboyneOS|' \
-  -e 's|^\( *supportUrl:\) .*|\1 https://github.com/grumpy-gaming/KrelboyneOS/issues|' \
-  -e 's|^\( *knownIssuesUrl:\) .*|\1 https://github.com/grumpy-gaming/KrelboyneOS/issues|' \
+  -e 's|^\( *supportUrl:\) .*|\1 https://discord.gg/hzUZDPwBs7|' \
+  -e 's|^\( *knownIssuesUrl:\) .*|\1 https://discord.gg/hzUZDPwBs7|' \
   -e 's|^\( *releaseNotesUrl:\) .*|\1 https://github.com/grumpy-gaming/KrelboyneOS/releases|' \
   -e 's|^\( *donateUrl:\) .*|\1 https://ko-fi.com/krelboyneos|' \
   $B/branding.desc
