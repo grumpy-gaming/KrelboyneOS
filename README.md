@@ -6,7 +6,7 @@
 
 A Debian 13 (trixie) live and installable Linux distribution for developers and security learners, with an Xfce desktop and the tools already set up.
 
-**Status: 0.1 alpha.** It boots and installs in a virtual machine. Real-hardware testing is still ahead.
+**Status: 0.1 alpha.** It boots and installs in a virtual machine, including with full-disk encryption, and runs installed on a Dell Latitude 7420. Testing on more hardware is still ahead.
 
 ## What it is
 
@@ -39,7 +39,7 @@ It started as a Linux From Scratch idea and became a Debian-based distro, so the
 - nmap, Wireshark and tshark, tcpdump, netcat, mtr, traceroute, whois, dig, iperf3
 - OpenVPN and WireGuard
 - aircrack-ng, John the Ripper, hashcat, Hydra, sqlmap, gobuster, Nuclei
-- Bruno, Metasploit, BloodHound CE and Burp Suite Community install on demand from the KOS Software app (System menu), which also updates the system and opens GNOME Software for everything else
+- Bruno, Metasploit, BloodHound CE, Burp Suite Community and about 70 more optional tools install on demand from the KOS Software app (System menu), which also updates the system and opens GNOME Software for everything else
 
 **Everyday apps**
 - Firefox ESR, GIMP, Claude Desktop
@@ -69,7 +69,7 @@ Write the ISO to a USB stick with a tool such as Ventoy, balenaEtcher or `dd`, t
 
 ## Try it in a VM
 
-Create a virtual machine with at least 4 GB of RAM, 25 GB of disk and UEFI or BIOS firmware, attach the ISO as its CD-ROM, and boot. Choose Install KrelboyneOS on the desktop to install it.
+Create a virtual machine with at least 4 GB of RAM, 25 GB of disk and UEFI or BIOS firmware, attach the ISO as its CD-ROM, and boot. Choose Install KrelboyneOS on the desktop to install it. To encrypt the disk, tick Encrypt system on the partitioning page; you'll type the passphrase at each boot.
 
 ## Build it yourself
 
@@ -79,7 +79,7 @@ You need a Debian 13 machine with live-build, git and about 20 GB of free disk s
     cd KrelboyneOS
     sudo lb clean; lb config; sudo lb build
 
-The finished ISO appears in the project folder.
+The finished ISO, `krelboyneos-amd64.hybrid.iso`, appears in the project folder.
 
 ## How the repo is laid out
 
@@ -93,7 +93,6 @@ The finished ISO appears in the project folder.
 ## Where it could go
 
 - Test on real hardware and under UEFI Secure Boot
-- Branded GRUB and boot splash screens on the installed system
 - Optional lighter and heavier editions, such as a minimal build and a full security build
 - A hosted apt repository for KrelboyneOS's own tools
 - A proper project website and documentation
