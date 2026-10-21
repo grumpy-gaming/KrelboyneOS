@@ -3,6 +3,7 @@ binary/
 cache/
 .build/
 *.iso
+*.iso.sha256
 *.log
 *.contents
 *.files
