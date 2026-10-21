@@ -1,0 +1,24 @@
+#!/bin/sh
+# Open a URL in the desktop user's browser, even when called as root.
+# Calamares runs as root through pkexec, and Firefox won't run as root
+# inside a user's session, so hand the link back to the user who
+# started the installer (pkexec sets PKEXEC_UID).
+
+if [ "$(id -u)" -ne 0 ] || [ -z "$PKEXEC_UID" ]; then
+    exec x-www-browser "$@"
+fi
+
+user=$(id -nu "$PKEXEC_UID") || exit 1
+home=$(getent passwd "$user" | cut -d: -f6)
+runtime=/run/user/$PKEXEC_UID
+
+xauth=$XAUTHORITY
+[ -r "$home/.Xauthority" ] && xauth=$home/.Xauthority
+
+setsid -f runuser -u "$user" -- env \
+    HOME="$home" \
+    DISPLAY="${DISPLAY:-:0}" \
+    XAUTHORITY="$xauth" \
+    XDG_RUNTIME_DIR="$runtime" \
+    DBUS_SESSION_BUS_ADDRESS="unix:path=$runtime/bus" \
+    x-www-browser "$@" >/dev/null 2>&1
