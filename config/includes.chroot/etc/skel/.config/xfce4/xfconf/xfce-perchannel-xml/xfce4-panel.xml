@@ -95,9 +95,7 @@
       </property>
     </property>
     <property name="plugin-17" type="string" value="separator"/>
-    <property name="plugin-18" type="string" value="directorymenu">
-      <property name="base-directory" type="string" value="/home/grumpy"/>
-    </property>
+    <property name="plugin-18" type="string" value="directorymenu"/>
     <property name="plugin-19" type="string" value="genmon"/>
     <property name="plugin-20" type="string" value="power-manager-plugin"/>
   </property>
