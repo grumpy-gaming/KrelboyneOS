@@ -54,12 +54,16 @@ The security tools are for learning and for testing systems you own or have writ
 
 ## Download
 
-Get the ISO from the [Releases page](https://github.com/grumpy-gaming/KrelboyneOS/releases).
+Get the latest ISO (amd64, about 3.4 GB) and its checksum:
 
-GitHub limits each file to 2 GiB, so the ISO may be split into parts. Join them and check the download like this:
+- [krelboyneos-amd64.hybrid.iso](https://pub-ad4da6f379c24154b7015df9c36434ab.r2.dev/krelboyneos-amd64.hybrid.iso)
+- [krelboyneos-amd64.hybrid.iso.sha256](https://pub-ad4da6f379c24154b7015df9c36434ab.r2.dev/krelboyneos-amd64.hybrid.iso.sha256)
 
-    cat krelboyneos-*.iso.part-* > krelboyneos.iso
-    sha256sum -c SHA256SUMS
+Download both into the same folder and check the ISO like this:
+
+    sha256sum -c krelboyneos-amd64.hybrid.iso.sha256
+
+Each release on the [Releases page](https://github.com/grumpy-gaming/KrelboyneOS/releases) lists its SHA-256 hash too. Check that it matches the one in the `.sha256` file.
 
 Write the ISO to a USB stick with a tool such as Ventoy, balenaEtcher or `dd`, then boot from it.
 
