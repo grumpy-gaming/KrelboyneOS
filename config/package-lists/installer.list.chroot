@@ -5,3 +5,7 @@ grub-pc-bin
 efibootmgr
 os-prober
 dosfstools
+# Unlock encrypted (LUKS) installs at boot
+cryptsetup
+cryptsetup-initramfs
+keyutils
