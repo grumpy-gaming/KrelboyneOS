@@ -97,6 +97,12 @@ The finished ISO, `krelboyneos-amd64.hybrid.iso`, appears in the project folder.
 - A hosted apt repository for KrelboyneOS's own tools
 - A proper project website and documentation
 
+## Help and support
+
+- Bugs and questions: open an issue on [GitHub Issues](https://github.com/grumpy-gaming/KrelboyneOS/issues)
+- Email: krelboyneos@gmail.com
+- Like the project? You can [buy me a coffee on Ko-fi](https://ko-fi.com/krelboyneos)
+
 ## Credits
 
 Built on Debian GNU/Linux, live-build, Calamares, Xfce and the many open source projects listed above. Each keeps its own license.

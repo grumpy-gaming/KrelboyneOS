@@ -15,7 +15,15 @@ sed -i \
   -e 's|^\( *productLogo:\) .*|\1 "krelboyneos-logo.png"|' \
   -e 's|^\( *productIcon:\) .*|\1 "krelboyneos-logo.png"|' \
   -e 's|^\( *productWelcome:\) .*|\1 "krelboyneos-welcome.png"|' \
+  -e 's|^\( *productUrl:\) .*|\1 https://github.com/grumpy-gaming/KrelboyneOS|' \
+  -e 's|^\( *supportUrl:\) .*|\1 https://github.com/grumpy-gaming/KrelboyneOS/issues|' \
+  -e 's|^\( *knownIssuesUrl:\) .*|\1 https://github.com/grumpy-gaming/KrelboyneOS/issues|' \
+  -e 's|^\( *releaseNotesUrl:\) .*|\1 https://github.com/grumpy-gaming/KrelboyneOS/releases|' \
+  -e 's|^\( *donateUrl:\) .*|\1 https://ko-fi.com/krelboyneos|' \
   $B/branding.desc
+# Show the Donate button (Ko-fi) on the welcome page
+W=/etc/calamares/modules/welcome.conf
+grep -q '^showDonateUrl:' $W || sed -i '/^showReleaseNotesUrl:/a showDonateUrl:          true' $W
 D=/usr/share/applications/calamares-install-debian.desktop
 sed -i -e 's|^Name=.*|Name=Install KrelboyneOS|' $D
 sed -i -e 's|^Comment=.*|Comment=Install KrelboyneOS to disk|' $D
