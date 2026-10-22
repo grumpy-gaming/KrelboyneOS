@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KrelboyneOS — a Debian-based Linux distro for developers and security learners</title>
+  <meta name="description" content="KrelboyneOS is a Debian 13 live and installable Linux distribution with an Xfce desktop, development tools and security tools already set up. 0.1.1 alpha.">
+  <meta name="theme-color" content="#060b12">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="KrelboyneOS">
+  <meta property="og:description" content="A Debian 13 live and installable distro for developers and security learners. Xfce, dark teal, tools already set up.">
+  <meta property="og:url" content="https://krelboyneos.org/">
+  <meta property="og:image" content="https://krelboyneos.org/img/kos-banner.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png">
+  <link rel="apple-touch-icon" href="img/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Orbitron:wght@600;700&display=swap">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="wrap">
+    <a class="brand" href="#top"><img src="img/favicon.png" alt="">KrelboyneOS</a>
+    <ul>
+      <li><a href="#about">about</a></li>
+      <li><a href="#inside">inside</a></li>
+      <li><a href="#screenshots">screenshots</a></li>
+      <li><a href="#download">download</a></li>
+      <li><a href="#install">install</a></li>
+      <li><a href="#build">build</a></li>
+      <li><a href="#community">community</a></li>
+    </ul>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <div class="wrap">
+    <img class="logo" src="img/kos-banner.jpg" alt="KrelboyneOS — based on Debian" width="1600" height="893">
+    <span class="badge">0.1.1 alpha</span>
+    <h1>A Linux desktop that is <span>ready for dev and security work</span> the moment it installs</h1>
+    <p class="lead">KrelboyneOS is a Debian 13 live and installable distro with an Xfce desktop, a tuned shell and the tools already set up. No afternoon of setup first.</p>
+    <div class="btn-row">
+      <a class="btn primary" href="#download">Download the ISO <small>3.4 GB</small></a>
+      <a class="btn" href="https://github.com/grumpy-gaming/KrelboyneOS">View on GitHub</a>
+      <a class="btn" href="https://discord.gg/hzUZDPwBs7">Join the Discord</a>
+    </div>
+    <div class="facts">
+      <span>base <b>Debian 13 (trixie)</b></span>
+      <span>desktop <b>Xfce</b></span>
+      <span>installer <b>Calamares</b></span>
+      <span>arch <b>amd64</b></span>
+      <span>disk encryption <b>supported</b></span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section id="about">
+    <div class="section-head"><span class="prompt">$</span><h2>What it is</h2></div>
+    <div class="grid cols-2">
+      <div class="window">
+        <div class="window-bar"><div class="dots"><i></i><i></i><i></i></div><span class="title">about.txt</span></div>
+        <div class="window-body">
+          <p>KrelboyneOS is a custom Linux ISO built with <a href="https://wiki.debian.org/DebianLive">live-build</a>. Boot it to try it, or install it to disk with the Calamares installer.</p>
+          <p>It started as a Linux From Scratch idea and became a Debian-based distro, so the focus is a useful daily workstation rather than a science project.</p>
+        </div>
+      </div>
+      <div class="window">
+        <div class="window-bar"><div class="dots"><i></i><i></i><i></i></div><span class="title">status.log</span></div>
+        <div class="window-body">
+          <p><strong>0.1.1 alpha.</strong> It boots and installs in a virtual machine, including with full-disk encryption, and runs installed on a Dell Latitude 7420.</p>
+          <p>Testing on more hardware is still ahead, so expect rough edges. Problems are welcome in the Discord.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="inside">
+    <div class="section-head"><span class="prompt">$</span><h2>What's inside</h2></div>
+    <p class="section-sub">The base image ships the everyday tools. Roughly 70 more optional tools install on demand from the <strong>KOS Software</strong> app in the System menu, which also updates the system and opens GNOME Software for everything else.</p>
+    <div class="grid cols-3">
+
+      <div class="window">
+        <div class="window-bar"><div class="dots"><i></i><i></i><i></i></div><span class="title">desktop-and-look</span></div>
+        <div class="window-body"><ul>
+          <li>Xfce on LightDM</li>
+          <li>Arc-Dark theme, Papirus icons</li>
+          <li>Dark teal branding on boot menus, splash, installer, login and desktop</li>
+          <li>conky system monitor on the desktop</li>
+        </ul></div>
+      </div>
+
+      <div class="window">
+        <div class="window-bar"><div class="dots"><i></i><i></i><i></i></div><span class="title">shell-and-terminal</span></div>
+        <div class="window-body"><ul>
+          <li>zsh with Oh My Zsh, autosuggestions, syntax highlighting, two-line prompt</li>
+          <li>zoxide, fzf, ripgrep, fd, bat, tmux, neovim, jq, htop, btop</li>
+          <li>Kitty terminal</li>
+          <li>JetBrainsMono and FiraCode Nerd Fonts</li>
+        </ul></div>
+      </div>
+
+      <div class="window">
+        <div class="window-bar"><div class="dots"><i></i><i></i><i></i></div><span class="title">development</span></div>
+        <div class="window-body"><ul>
+          <li>git, git-lfs, lazygit, GitHub CLI</li>
+          <li>Python 3 (pip, venv, pipx), Node.js and npm, mise for other languages</li>
+          <li>build-essential, cmake, ninja, clang, gdb</li>
+          <li>VS Code, httpie</li>
+          <li>PostgreSQL, SQLite</li>
+          <li>Docker and Docker Compose</li>
+          <li>KVM, QEMU, libvirt, virt-manager</li>
+        </ul></div>
+      </div>
+
+      <div class="window">
+        <div class="window-bar"><div class="dots"><i></i><i></i><i></i></div><span class="title">security</span></div>
+        <div class="window-body"><ul>
+          <li>nmap, Wireshark and tshark, tcpdump, netcat, mtr, traceroute, whois, dig, iperf3</li>
+          <li>OpenVPN, WireGuard</li>
+          <li>aircrack-ng, John the Ripper, hashcat, Hydra, sqlmap, gobuster, Nuclei</li>
+          <li>On demand: Metasploit, BloodHound CE, Burp Suite Community, Bruno and more</li>
+        </ul></div>
+      </div>
+
+      <div class="window">
+        <div class="window-bar"><div class="dots"><i></i><i></i><i></i></div><span class="title">everyday-apps</span></div>
+        <div class="window-body"><ul>
+          <li>Firefox ESR</li>
+          <li>GIMP</li>
+          <li>LibreOffice Writer and Calc</li>
+          <li>Claude Desktop</li>
+        </ul></div>
+      </div>
+
+      <div class="window">
+        <div class="window-bar"><div class="dots"><i></i><i></i><i></i></div><span class="title">hardware-and-build</span></div>
+        <div class="window-body"><ul>
+          <li>Non-free firmware for common Wi-Fi, Bluetooth, sound and graphics hardware (Intel, Realtek)</li>
+          <li>Builds itself: live-build, debootstrap, xorriso, squashfs-tools, ImageMagick</li>
+        </ul></div>
+      </div>
+
+    </div>
+    <p class="note" style="margin-top:16px">The security tools are for learning and for testing systems you own or have written permission to test.</p>
+  </section>
+
+  <section id="screenshots">
+    <div class="section-head"><span class="prompt">$</span><h2>Screenshots</h2></div>
+    <p class="section-sub">KrelboyneOS 0.1.1 on a Dell Latitude 7420 and in a virtual machine. Click a picture to see it full size.</p>
+    <figure class="window shot shot-wide">
+      <div class="window-bar"><div class="dots"><i></i><i></i><i></i></div><span class="title">kitty: fastfetch</span></div>
+      <a href="img/shots/fastfetch.webp"><img src="img/shots/fastfetch.webp" alt="Kitty terminal running fastfetch with the KOS logo, showing KrelboyneOS 0.1.1 on Debian 13" width="1600" height="900" loading="lazy"></a>
+      <figcaption>Kitty and zsh, with fastfetch showing the KOS logo.</figcaption>
+    </figure>
+    <div class="grid cols-2 shots">
+      <figure class="window shot">
+        <div class="window-bar"><div class="dots"><i></i><i></i><i></i></div><span class="title">desktop</span></div>
+        <a href="img/shots/desktop.webp"><img src="img/shots/desktop.webp" alt="Xfce desktop with the KrelboyneOS wallpaper and the conky system monitor" width="1600" height="900" loading="lazy"></a>
+        <figcaption>The Xfce desktop with conky.</figcaption>
+      </figure>
+      <figure class="window shot">
+        <div class="window-bar"><div class="dots"><i></i><i></i><i></i></div><span class="title">boot-menu</span></div>
+        <a href="img/shots/boot-menu.webp"><img src="img/shots/boot-menu.webp" alt="Branded GRUB live boot menu reading Krelboyne OS based on Debian Trixie" width="1600" height="900" loading="lazy"></a>
+        <figcaption>The live boot menu.</figcaption>
+      </figure>
+      <figure class="window shot">
+        <div class="window-bar"><div class="dots"><i></i><i></i><i></i></div><span class="title">installer</span></div>
+        <a href="img/shots/installer.webp"><img src="img/shots/installer.webp" alt="Calamares installer welcome page for KrelboyneOS 0.1.1" width="1600" height="878" loading="lazy"></a>
+        <figcaption>The Calamares installer.</figcaption>
+      </figure>
+      <figure class="window shot">
+        <div class="window-bar"><div class="dots"><i></i><i></i><i></i></div><span class="title">kos-software</span></div>
+        <a href="img/shots/kos-software.webp"><img src="img/shots/kos-software.webp" alt="KOS Software app listing optional security tools such as Metasploit, BloodHound CE and Burp Suite" width="1600" height="900" loading="lazy"></a>
+        <figcaption>KOS Software, for the optional tools.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section id="download" class="download">
+    <div class="section-head"><span class="prompt">$</span><h2>Download</h2></div>
+    <div class="window">
+      <div class="window-bar"><div class="dots"><i></i><i></i><i></i></div><span class="title">krelboyneos-amd64.hybrid.iso</span></div>
+      <div class="window-body">
+        <div>
+          <p>Latest ISO for 64-bit PCs, about 3.4 GB. Download the checksum file too, into the same folder.</p>
+          <div class="file-line">
+            <a href="https://pub-ad4da6f379c24154b7015df9c36434ab.r2.dev/krelboyneos-amd64.hybrid.iso"><strong>krelboyneos-amd64.hybrid.iso</strong></a>
+            <span>~3.4 GB</span>
+          </div>
+          <div class="file-line">
+            <a href="https://pub-ad4da6f379c24154b7015df9c36434ab.r2.dev/krelboyneos-amd64.hybrid.iso.sha256">krelboyneos-amd64.hybrid.iso.sha256</a>
+            <span>checksum</span>
+          </div>
+          <p class="note">Each release on the <a href="https://github.com/grumpy-gaming/KrelboyneOS/releases">Releases page</a> lists its SHA-256 hash too. It should match the one in the <code>.sha256</code> file.</p>
+        </div>
+        <div>
+          <p><strong>Check it after downloading:</strong></p>
+          <div class="code">
+            <pre><span class="p">$ </span>sha256sum -c krelboyneos-amd64.hybrid.iso.sha256</pre>
+            <button class="copy" type="button" data-copy="sha256sum -c krelboyneos-amd64.hybrid.iso.sha256">copy</button>
+          </div>
+          <p style="margin-top:14px">Then write the ISO to a USB stick with <a href="https://www.ventoy.net/">Ventoy</a>, <a href="https://etcher.balena.io/">balenaEtcher</a> or <code>dd</code>, and boot from it.</p>
+          <div class="warn-box">0.1.1 alpha: try it in a VM or on a spare machine before you trust it with your daily work.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="install">
+    <div class="section-head"><span class="prompt">$</span><h2>Try it in a VM</h2></div>
+    <div class="grid cols-2">
+      <div class="window">
+        <div class="window-bar"><div class="dots"><i></i><i></i><i></i></div><span class="title">vm-setup</span></div>
+        <div class="window-body">
+          <ul>
+            <li>At least <strong>4 GB of RAM</strong> and <strong>25 GB of disk</strong></li>
+            <li>UEFI or BIOS firmware</li>
+            <li>Attach the ISO as the CD-ROM and boot</li>
+            <li>Double-click <strong>Install KrelboyneOS</strong> on the desktop to install</li>
+          </ul>
+        </div>
+      </div>
+      <div class="window">
+        <div class="window-bar"><div class="dots"><i></i><i></i><i></i></div><span class="title">disk-encryption</span></div>
+        <div class="window-body">
+          <p>To encrypt the disk, tick <strong>Encrypt system</strong> on the partitioning page of the installer.</p>
+          <p>You'll type the passphrase at each boot, so pick one you will remember.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="build">
+    <div class="section-head"><span class="prompt">$</span><h2>Build it yourself</h2></div>
+    <div class="window">
+      <div class="window-bar"><div class="dots"><i></i><i></i><i></i></div><span class="title">build.sh</span></div>
+      <div class="window-body">
+        <p>You need a Debian 13 machine with <code>live-build</code>, <code>git</code> and about 20 GB of free disk space.</p>
+        <div class="code">
+          <pre><span class="p">$ </span>git clone https://github.com/grumpy-gaming/KrelboyneOS.git
+<span class="p">$ </span>cd KrelboyneOS
+<span class="p">$ </span>sudo lb clean; lb config; sudo lb build</pre>
+          <button class="copy" type="button" data-copy="git clone https://github.com/grumpy-gaming/KrelboyneOS.git&#10;cd KrelboyneOS&#10;sudo lb clean; lb config; sudo lb build">copy</button>
+        </div>
+        <p style="margin-top:12px">The finished ISO, <code>krelboyneos-amd64.hybrid.iso</code>, appears in the project folder.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="roadmap">
+    <div class="section-head"><span class="prompt">$</span><h2>Where it could go</h2></div>
+    <div class="window">
+      <div class="window-bar"><div class="dots"><i></i><i></i><i></i></div><span class="title">roadmap.md</span></div>
+      <div class="window-body roadmap"><ul>
+        <li>Test on real hardware and under UEFI Secure Boot</li>
+        <li>Lighter and heavier editions, such as a minimal build and a full security build</li>
+        <li>A hosted apt repository for KrelboyneOS's own tools</li>
+        <li>Proper project documentation</li>
+      </ul></div>
+    </div>
+  </section>
+
+  <section id="community">
+    <div class="section-head"><span class="prompt">$</span><h2>Help and community</h2></div>
+    <div class="grid cols-2">
+      <a class="window hoverable link-card" href="https://discord.gg/hzUZDPwBs7"><strong>Discord</strong><span>Help, bug reports and known issues. The best place to ask.</span></a>
+      <a class="window hoverable link-card" href="https://github.com/grumpy-gaming/KrelboyneOS"><strong>GitHub</strong><span>Source, issues and releases.</span></a>
+      <a class="window hoverable link-card" href="mailto:krelboyneos@gmail.com"><strong>Email</strong><span>krelboyneos@gmail.com</span></a>
+      <a class="window hoverable link-card" href="https://ko-fi.com/krelboyneos"><strong>Ko-fi</strong><span>Like the project? You can buy me a coffee.</span></a>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>KrelboyneOS is made by <a href="https://github.com/grumpy-gaming">grumpy-gaming</a>.</p>
+    <p>Built on Debian GNU/Linux, live-build, Calamares, Xfce and the many open source projects listed above. Each keeps its own license. KrelboyneOS is an independent project and is not affiliated with or endorsed by Debian.</p>
+  </div>
+</footer>
+
+<script>
+  document.querySelectorAll('.copy').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var text = btn.getAttribute('data-copy');
+      var done = function () { var o = btn.textContent; btn.textContent = 'copied'; setTimeout(function () { btn.textContent = o; }, 1400); };
+      if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(text).then(done, function () {}); }
+    });
+  });
+</script>
+</body>
+</html>
