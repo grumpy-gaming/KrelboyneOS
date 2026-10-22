@@ -79,6 +79,6 @@ Edit the files on AcidBurn and re-run the `rsync` step. No restart is needed.
 
 ## Things to do later
 
-- **Download links:** the two download links use the `r2.dev` address, which Cloudflare intends for testing and rate-limits. For a real release, attach a custom domain to the R2 bucket (for example `dl.krelboyneos.org`) and change the two links in `index.html` and the README. A search for `r2.dev` finds them.
+- **Download links:** the ISO and checksum are served from `https://dl.krelboyneos.org/`, a custom domain on the R2 bucket. Don't use the bucket's `r2.dev` address in links: Cloudflare rate-limits it and means it for testing.
 - **Screenshots:** they live in `img/shots/` as 1600px-wide WebP files. To add or replace one, convert the PNG with `convert shot.png -resize '1600x>' -quality 80 img/shots/NAME.webp` and add a `<figure>` in the Screenshots section of `index.html`.
 - **Fonts:** the page loads Orbitron and JetBrains Mono from Google Fonts. To avoid the third-party request, download them and serve them from `img/` or a `fonts/` folder.

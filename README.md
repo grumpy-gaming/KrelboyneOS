@@ -6,7 +6,9 @@
 
 A Debian 13 (trixie) live and installable Linux distribution for developers and security learners, with an Xfce desktop and the tools already set up.
 
-**Status: 0.1 alpha.** It boots and installs in a virtual machine, including with full-disk encryption, and runs installed on a Dell Latitude 7420. Testing on more hardware is still ahead.
+Website: [krelboyneos.org](https://krelboyneos.org)
+
+**Status: 0.1.1 alpha.** It boots and installs in a virtual machine, including with full-disk encryption, and runs installed on a Dell Latitude 7420. Testing on more hardware is still ahead.
 
 ## What it is
 
@@ -56,8 +58,8 @@ The security tools are for learning and for testing systems you own or have writ
 
 Get the latest ISO (amd64, about 3.4 GB) and its checksum:
 
-- [krelboyneos-amd64.hybrid.iso](https://pub-ad4da6f379c24154b7015df9c36434ab.r2.dev/krelboyneos-amd64.hybrid.iso)
-- [krelboyneos-amd64.hybrid.iso.sha256](https://pub-ad4da6f379c24154b7015df9c36434ab.r2.dev/krelboyneos-amd64.hybrid.iso.sha256)
+- [krelboyneos-amd64.hybrid.iso](https://dl.krelboyneos.org/krelboyneos-amd64.hybrid.iso)
+- [krelboyneos-amd64.hybrid.iso.sha256](https://dl.krelboyneos.org/krelboyneos-amd64.hybrid.iso.sha256)
 
 Download both into the same folder and check the ISO like this:
 
