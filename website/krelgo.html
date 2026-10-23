@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Krelboyne Go — a Debian-based gaming OS for the Lenovo Legion Go</title>
+  <meta name="description" content="Krelboyne Go (KrelGo) is a Debian 13 gaming OS for the original Lenovo Legion Go: Steam with Proton, RetroArch and ES-DE on an Xfce desktop. 0.1.0 alpha.">
+  <meta name="theme-color" content="#060b12">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Krelboyne Go">
+  <meta property="og:description" content="A Debian 13 gaming OS for the Lenovo Legion Go. Steam, Proton, RetroArch and ES-DE, ready when it installs.">
+  <meta property="og:url" content="https://krelboyneos.org/krelgo.html">
+  <meta property="og:image" content="https://krelboyneos.org/img/krelgo/krelgo-banner.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png">
+  <link rel="apple-touch-icon" href="img/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Orbitron:wght@600;700&display=swap">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="wrap">
+    <a class="brand" href="#top"><img src="img/favicon.png" alt="">Krelboyne Go</a>
+    <ul>
+      <li><a href="#about">about</a></li>
+      <li><a href="#inside">inside</a></li>
+      <li><a href="#tested">tested</a></li>
+      <li><a href="#download">download</a></li>
+      <li><a href="#install">install</a></li>
+      <li><a href="#community">community</a></li>
+      <li><a href="index.html">KrelboyneOS</a></li>
+    </ul>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <div class="wrap">
+    <img class="logo" src="img/krelgo/krelgo-banner.jpg" alt="KRELBOYNE GO — a gaming OS" width="1600" height="900">
+    <span class="badge">0.1.0 alpha</span>
+    <h1>A gaming OS for the <span>Lenovo Legion Go</span></h1>
+    <p class="lead">Krelboyne Go (KrelGo) is a Debian 13 system for the original Legion Go. It boots to a dark teal Xfce desktop in landscape at 144 Hz, with Steam, Proton, RetroArch and ES-DE ready to play.</p>
+    <div class="btn-row">
+      <a class="btn primary" href="#download">Download the ISO <small>2.1 GB</small></a>
+      <a class="btn" href="https://github.com/grumpy-gaming/krelgo">View on GitHub</a>
+      <a class="btn" href="https://discord.gg/hzUZDPwBs7">Join the Discord</a>
+    </div>
+    <div class="facts">
+      <span>base <b>Debian 13 (trixie)</b></span>
+      <span>desktop <b>Xfce</b></span>
+      <span>device <b>Legion Go (Z1 Extreme)</b></span>
+      <span>screen <b>2560x1600, 144 Hz</b></span>
+      <span>arch <b>amd64</b></span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section id="about">
+    <div class="section-head"><span class="prompt">$</span><h2>What it is</h2></div>
+    <div class="grid cols-2">
+      <div class="window">
+        <div class="window-bar"><div class="dots"><i></i><i></i><i></i></div><span class="title">about.txt</span></div>
+        <div class="window-body">
+          <p>Krelboyne Go is the gaming sister of <a href="index.html">KrelboyneOS</a>, built the same way with <a href="https://wiki.debian.org/DebianLive">live-build</a> and installed with Calamares.</p>
+          <p>It keeps only what a handheld needs: games, a browser, sound, Wi-Fi and a touch keyboard. It is made for the original Legion Go, not the Legion Go S or Go 2.</p>
+        </div>
+      </div>
+      <div class="window">
+        <div class="window-bar"><div class="dots"><i></i><i></i><i></i></div><span class="title">status.log</span></div>
+        <div class="window-body">
+          <p><strong>0.1.0 alpha.</strong> It runs installed on a Legion Go, with Steam games through Proton, emulators through ES-DE and RetroArch, and the built-in controller working in both.</p>
+          <p>Some hardware isn't tested yet (see below), so expect rough edges. Problems are welcome in the Discord.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="inside">
+    <div class="section-head"><span class="prompt">$</span><h2>What's inside</h2></div>
+    <div class="grid cols-3">
+
+      <div class="window">
+        <div class="window-bar"><div class="dots"><i></i><i></i><i></i></div><span class="title">games</span></div>
+        <div class="window-body"><ul>
+          <li>Steam, with Proton for Windows games</li>
+          <li>ES-DE game frontend</li>
+          <li>RetroArch with NES, SNES, Genesis, Game Boy, GBA and DS cores</li>
+          <li>Built-in controller works in Steam, ES-DE and RetroArch</li>
+        </ul></div>
+      </div>
+
+      <div class="window">
+        <div class="window-bar"><div class="dots"><i></i><i></i><i></i></div><span class="title">made-for-the-go</span></div>
+        <div class="window-body"><ul>
+          <li>Turns the portrait panel to landscape at 144 Hz on the login screen and desktop</li>
+          <li>Text sized for the 8.8 inch screen (160 DPI)</li>
+          <li>Tap-to-click on the touchpad</li>
+          <li>Onboard touch keyboard, also on the login and lock screen</li>
+        </ul></div>
+      </div>
+
+      <div class="window">
+        <div class="window-bar"><div class="dots"><i></i><i></i><i></i></div><span class="title">everyday</span></div>
+        <div class="window-body"><ul>
+          <li>Xfce on LightDM, Arc-Dark theme, Papirus icons</li>
+          <li>Firefox ESR</li>
+          <li>PipeWire sound with a volume control in the panel</li>
+          <li>Wi-Fi and firmware, clock set from the internet</li>
+        </ul></div>
+      </div>
+
+    </div>
+  </section>
+
+  <section id="tested">
+    <div class="section-head"><span class="prompt">$</span><h2>Tested on the Legion Go</h2></div>
+    <div class="grid cols-2">
+      <div class="window">
+        <div class="window-bar"><div class="dots"><i></i><i></i><i></i></div><span class="title">works.log</span></div>
+        <div class="window-body"><ul>
+          <li>Live boot and install to the internal SSD</li>
+          <li>Landscape at 144 Hz, AMD graphics</li>
+          <li>Wi-Fi, sound, touchpad, touchscreen</li>
+          <li>Controller in Steam, ES-DE and RetroArch</li>
+          <li>Steam games through Proton</li>
+        </ul></div>
+      </div>
+      <div class="window">
+        <div class="window-bar"><div class="dots"><i></i><i></i><i></i></div><span class="title">not-yet.log</span></div>
+        <div class="window-body"><ul>
+          <li>Sleep and resume</li>
+          <li>Volume and brightness buttons</li>
+          <li>Rumble, rear paddles and gyro</li>
+        </ul>
+        <p class="note">The boot menu appears sideways, because the Go's screen is portrait until Linux starts. Everything after it is landscape.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="download" class="download">
+    <div class="section-head"><span class="prompt">$</span><h2>Download</h2></div>
+    <div class="window">
+      <div class="window-bar"><div class="dots"><i></i><i></i><i></i></div><span class="title">krelboynego-amd64.hybrid.iso</span></div>
+      <div class="window-body">
+        <div>
+          <p>Latest ISO, about 2.1 GB. Download the checksum file too, into the same folder.</p>
+          <div class="file-line">
+            <a href="https://dl.krelboyneos.org/krelboynego-amd64.hybrid.iso"><strong>krelboynego-amd64.hybrid.iso</strong></a>
+            <span>~2.1 GB</span>
+          </div>
+          <div class="file-line">
+            <a href="https://dl.krelboyneos.org/krelboynego-amd64.hybrid.iso.sha256">krelboynego-amd64.hybrid.iso.sha256</a>
+            <span>checksum</span>
+          </div>
+          <p class="note">Each release on the <a href="https://github.com/grumpy-gaming/krelgo/releases">Releases page</a> lists its SHA-256 hash too. It should match the one in the <code>.sha256</code> file.</p>
+        </div>
+        <div>
+          <p><strong>Check it after downloading:</strong></p>
+          <div class="code">
+            <pre><span class="p">$ </span>sha256sum -c krelboynego-amd64.hybrid.iso.sha256</pre>
+            <button class="copy" type="button" data-copy="sha256sum -c krelboynego-amd64.hybrid.iso.sha256">copy</button>
+          </div>
+          <p style="margin-top:14px">Then put the ISO on a USB stick or microSD card with <a href="https://www.ventoy.net/">Ventoy</a>, <a href="https://etcher.balena.io/">balenaEtcher</a> or <code>dd</code>.</p>
+          <div class="warn-box">0.1.0 alpha: try it live first. Installing with Erase disk replaces whatever is on the SSD, Windows included.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="install">
+    <div class="section-head"><span class="prompt">$</span><h2>Install it on the Go</h2></div>
+    <div class="grid cols-2">
+      <div class="window">
+        <div class="window-bar"><div class="dots"><i></i><i></i><i></i></div><span class="title">boot-live</span></div>
+        <div class="window-body">
+          <ul>
+            <li>Turn <strong>Secure Boot off</strong> in the Go's BIOS. With it on, the Go doesn't show its USB or card port as a boot device.</li>
+            <li>Boot from the USB stick or card and pick the live entry</li>
+            <li>Check that Wi-Fi, sound and the controller work for you</li>
+          </ul>
+        </div>
+      </div>
+      <div class="window">
+        <div class="window-bar"><div class="dots"><i></i><i></i><i></i></div><span class="title">install</span></div>
+        <div class="window-body">
+          <p>Double-click <strong>Install Krelboyne Go</strong> on the desktop. On the partitioning page, check that the internal SSD is selected, not your USB stick or card.</p>
+          <p>Back up anything you want to keep from Windows first.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="community">
+    <div class="section-head"><span class="prompt">$</span><h2>Help and community</h2></div>
+    <div class="grid cols-2">
+      <a class="window hoverable link-card" href="https://discord.gg/hzUZDPwBs7"><strong>Discord</strong><span>Help, bug reports and known issues. The best place to ask.</span></a>
+      <a class="window hoverable link-card" href="https://github.com/grumpy-gaming/krelgo"><strong>GitHub</strong><span>Source, issues and releases.</span></a>
+      <a class="window hoverable link-card" href="mailto:krelboyneos@gmail.com"><strong>Email</strong><span>krelboyneos@gmail.com</span></a>
+      <a class="window hoverable link-card" href="https://ko-fi.com/krelboyneos"><strong>Ko-fi</strong><span>Like the project? You can buy me a coffee.</span></a>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>Krelboyne Go is made by <a href="https://github.com/grumpy-gaming">grumpy-gaming</a>, alongside <a href="index.html">KrelboyneOS</a>.</p>
+    <p>Built on Debian GNU/Linux, live-build, Calamares, Xfce, Steam, RetroArch, ES-DE and many other open source projects. Each keeps its own license. Krelboyne Go is an independent project and is not affiliated with or endorsed by Debian, Lenovo or Valve.</p>
+  </div>
+</footer>
+
+<script>
+  document.querySelectorAll('.copy').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var text = btn.getAttribute('data-copy');
+      var done = function () { var o = btn.textContent; btn.textContent = 'copied'; setTimeout(function () { btn.textContent = o; }, 1400); };
+      if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(text).then(done, function () {}); }
+    });
+  });
+</script>
+</body>
+</html>
