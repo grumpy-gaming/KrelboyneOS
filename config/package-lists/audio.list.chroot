@@ -1,0 +1,5 @@
+# Sound: PipeWire with the PulseAudio and ALSA layers, mixer and panel volume
+pipewire-audio
+alsa-utils
+pavucontrol
+xfce4-pulseaudio-plugin

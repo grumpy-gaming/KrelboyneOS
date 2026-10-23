@@ -50,6 +50,7 @@ It started as a Linux From Scratch idea and became a Debian-based distro, so the
 - live-build, debootstrap, xorriso, squashfs-tools and ImageMagick
 
 **Hardware support**
+- PipeWire sound with a volume control in the panel
 - Non-free firmware for common Wi-Fi, Bluetooth, sound and graphics hardware (Intel, Realtek)
 
 The security tools are for learning and for testing systems you own or have written permission to test.
