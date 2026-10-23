@@ -1,5 +1,8 @@
 #!/bin/sh
 set -e
-F=/usr/share/lightdm/lightdm-gtk-greeter.conf.d/01_debian.conf
-sed -i -e 's|^background=.*|background=/usr/share/krelboyneos/branding/login.jpg|' $F
-sed -i -e 's|^theme-name=.*|theme-name=Arc-Dark|' $F
+# Login screen settings go in the greeter's /etc config file, which dpkg
+# keeps on upgrades (the /usr/share conf.d file gets replaced)
+F=/etc/lightdm/lightdm-gtk-greeter.conf
+grep -q '^# KrelboyneOS' $F || sed -i '/^\[greeter\]/a # KrelboyneOS\
+background=/usr/share/krelboyneos/branding/login.jpg\
+theme-name=Arc-Dark' $F
