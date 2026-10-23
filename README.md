@@ -8,7 +8,7 @@ A Debian 13 (trixie) live and installable Linux distribution for developers and 
 
 Website: [krelboyneos.org](https://krelboyneos.org)
 
-**Status: 0.1.1 alpha.** It boots and installs in a virtual machine, including with full-disk encryption, and runs installed on a Dell Latitude 7420. Testing on more hardware is still ahead.
+**Status: 0.1.2 alpha.** It boots and installs in a virtual machine, including with full-disk encryption, and runs installed on a Dell Latitude 7420. Testing on more hardware is still ahead.
 
 ## What it is
 
