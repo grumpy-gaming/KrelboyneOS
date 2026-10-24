@@ -1,7 +1,9 @@
 #!/usr/bin/python3
-# Password window for sudo, used by KOS Software through SUDO_ASKPASS.
+# Password window for sudo, used by KOS Software and KOS Doctor through SUDO_ASKPASS.
 # sudo runs this and reads the password from its output; nothing is stored.
+# KOS_ASKPASS_TITLE sets the window title (default "KOS Software").
 import getpass
+import os
 import sys
 
 import gi
@@ -11,7 +13,7 @@ from gi.repository import GdkPixbuf, GLib, Gtk
 
 LOGO = "/usr/share/krelboyneos/branding/logo.png"
 
-dialog = Gtk.Dialog(title="KOS Software")
+dialog = Gtk.Dialog(title=os.environ.get("KOS_ASKPASS_TITLE", "KOS Software"))
 dialog.add_buttons("Cancel", Gtk.ResponseType.CANCEL, "OK", Gtk.ResponseType.OK)
 dialog.set_default_response(Gtk.ResponseType.OK)
 dialog.set_position(Gtk.WindowPosition.CENTER)

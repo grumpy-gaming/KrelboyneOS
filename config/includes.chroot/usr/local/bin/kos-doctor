@@ -1,7 +1,8 @@
 #!/usr/bin/python3
 # KOS Doctor: check for known KrelboyneOS problems and fix them one at a time.
 #   Checks: /usr/share/kos-doctor/checks.ini
-#   kos-doctor --check        check everything (exit 1 if anything needs fixing)
+#   kos-doctor                a window that checks everything, with a Fix button per problem
+#   kos-doctor --check        the same checks in the terminal (exit 1 if anything needs fixing)
 #   kos-doctor --fix ID       show the fix for one check, ask, run it, check again
 #   kos-doctor --explain ID   say what a check looks for and what its fix does
 import argparse
@@ -9,8 +10,11 @@ import configparser
 import os
 import subprocess
 import sys
+import threading
 
 CHECKS_FILE = os.environ.get("KOS_DOCTOR_CHECKS", "/usr/share/kos-doctor/checks.ini")
+ASKPASS = "/usr/local/bin/kos-askpass"
+LOGO = "/usr/share/krelboyneos/branding/logo.png"
 TIMEOUT = 30  # seconds for one test
 
 # KOS teal for OK, red for problems; plain text when not on a terminal
@@ -38,9 +42,15 @@ class Check:
         except subprocess.TimeoutExpired:
             return False
 
-    def fix_command(self):
-        """The command that applies the fix, as it will run."""
-        return ["sudo", "sh", "-c", self.fix] if self.root else ["sh", "-c", self.fix]
+    def fix_command(self, askpass=False):
+        """The command that applies the fix. In the window, sudo asks with kos-askpass (-A)."""
+        if not self.root:
+            return ["sh", "-c", self.fix]
+        return ["sudo", "-A", "sh", "-c", self.fix] if askpass else ["sudo", "sh", "-c", self.fix]
+
+    def shown_command(self):
+        """The fix as a person would type it."""
+        return f"{'sudo ' if self.root else ''}sh -c '{self.fix}'"
 
 
 def load_checks():
@@ -56,6 +66,8 @@ def find(checks, key):
             return check
     sys.exit(f"kos-doctor: no check called '{key}' (see kos-doctor --check)")
 
+
+# ---- terminal ----
 
 def check_all(checks):
     problems = 0
@@ -81,7 +93,7 @@ def explain(check):
     print(f"  Status: {'OK' if check.passes() else 'needs fixing'}")
     if check.fix:
         print(f"  Fix{' (needs your password)' if check.root else ''}:")
-        print(f"    {' '.join(check.fix_command()[:-1])} '{check.fix}'")
+        print(f"    {check.shown_command()}")
     return 0
 
 
@@ -98,7 +110,7 @@ def fix(check, assume_yes):
     if check.explain:
         print(f"  {check.explain}")
     print("  This will run:")
-    print(f"    {' '.join(check.fix_command()[:-1])} '{check.fix}'")
+    print(f"    {check.shown_command()}")
     if not assume_yes and input("  Run it? [y/N] ").strip().lower() not in ("y", "yes"):
         print("  Not changed.")
         return 1
@@ -112,10 +124,207 @@ def fix(check, assume_yes):
     return 1
 
 
+# ---- window ----
+
+def run_window(checks):
+    import gi
+    gi.require_version("Gtk", "3.0")
+    gi.require_version("Gdk", "3.0")
+    gi.require_version("GdkPixbuf", "2.0")
+    from gi.repository import Gdk, GdkPixbuf, GLib, Gtk
+
+    # KOS teal on the dark theme, as in KOS Software
+    css = Gtk.CssProvider()
+    css.load_from_data(b"""
+    .kos-name { font-weight: bold; font-size: 1.1em; }
+    .kos-dim { opacity: 0.7; }
+    .kos-ok { color: #3fd0ef; font-weight: bold; }
+    .kos-problem { color: #ef6b6b; font-weight: bold; }
+    .kos-summary { font-size: 1.2em; font-weight: bold; }
+    .kos-command { font-family: monospace; opacity: 0.8; }
+    button.kos-accent { background-image: none; background-color: #1f7f99; color: #ffffff; }
+    button.kos-accent:hover { background-color: #3fd0ef; color: #03060f; }
+    """)
+    Gtk.StyleContext.add_provider_for_screen(Gdk.Screen.get_default(), css,
+                                             Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+    Gtk.Settings.get_default().set_property("gtk-application-prefer-dark-theme", True)
+
+    class CheckRow(Gtk.ListBoxRow):
+        def __init__(self, check, on_fix):
+            super().__init__(activatable=False)
+            self.check = check
+            box = Gtk.Box(spacing=12, margin=10)
+            self.status = Gtk.Label(label="…", width_chars=9, xalign=0)
+            box.pack_start(self.status, False, False, 0)
+
+            text = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=3)
+            name = Gtk.Label(label=check.name, xalign=0)
+            name.get_style_context().add_class("kos-name")
+            text.pack_start(name, False, False, 0)
+            self.detail = Gtk.Label(label=check.explain, xalign=0, wrap=True, max_width_chars=70)
+            self.detail.get_style_context().add_class("kos-dim")
+            text.pack_start(self.detail, False, False, 0)
+            self.note = Gtk.Label(xalign=0, wrap=True, max_width_chars=70)
+            text.pack_start(self.note, False, False, 0)
+            self.command = Gtk.Label(label=check.shown_command() if check.fix else "", xalign=0,
+                                     wrap=True, max_width_chars=70, selectable=True)
+            self.command.get_style_context().add_class("kos-command")
+            text.pack_start(self.command, False, False, 0)
+            box.pack_start(text, True, True, 0)
+
+            buttons = Gtk.Box(spacing=6, valign=Gtk.Align.CENTER)
+            self.show_button = Gtk.ToggleButton(label="Show command")
+            self.show_button.connect("toggled", lambda b: self.command.set_visible(b.get_active()))
+            buttons.pack_start(self.show_button, False, False, 0)
+            self.fix_button = Gtk.Button(label="Fix")
+            if check.root:
+                self.fix_button.set_tooltip_text("Needs your password")
+            self.fix_button.get_style_context().add_class("kos-accent")
+            self.fix_button.connect("clicked", lambda b: on_fix(self))
+            buttons.pack_start(self.fix_button, False, False, 0)
+            box.pack_end(buttons, False, False, 0)
+            self.add(box)
+
+        def set_state(self, state, note=""):
+            """state: checking, ok, problem, fixing, failed"""
+            labels = {"checking": "Checking", "ok": "OK", "problem": "Problem",
+                      "fixing": "Fixing…", "failed": "Problem"}
+            style = self.status.get_style_context()
+            style.remove_class("kos-ok")
+            style.remove_class("kos-problem")
+            if state == "ok":
+                style.add_class("kos-ok")
+            elif state in ("problem", "failed"):
+                style.add_class("kos-problem")
+            self.status.set_label(labels[state])
+            needs_fix = state in ("problem", "failed")
+            self.detail.set_visible(needs_fix and bool(self.check.explain))
+            self.note.set_label(note)
+            self.note.set_visible(bool(note))
+            self.fix_button.set_visible(needs_fix and bool(self.check.fix))
+            self.show_button.set_visible(needs_fix and bool(self.check.fix))
+            if not needs_fix:
+                self.show_button.set_active(False)
+            self.command.set_visible(self.show_button.get_active())
+
+    class DoctorWindow(Gtk.Window):
+        def __init__(self):
+            super().__init__(title="KOS Doctor")
+            self.set_default_size(820, 640)
+            self.busy = False
+
+            header = Gtk.HeaderBar(title="KOS Doctor", subtitle="Find and fix common KrelboyneOS problems",
+                                   show_close_button=True)
+            header.set_decoration_layout(":minimize,maximize,close")
+            self.set_titlebar(header)
+            try:
+                self.set_icon_from_file(LOGO)
+                logo = GdkPixbuf.Pixbuf.new_from_file_at_scale(LOGO, 32, 32, True)
+                header.pack_start(Gtk.Image.new_from_pixbuf(logo))
+            except GLib.Error:
+                pass
+            self.again = Gtk.Button(label="Check again")
+            self.again.connect("clicked", lambda b: self.check_everything())
+            header.pack_end(self.again)
+
+            outer = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6, margin=12)
+            self.add(outer)
+            self.summary = Gtk.Label(xalign=0)
+            self.summary.get_style_context().add_class("kos-summary")
+            outer.pack_start(self.summary, False, False, 0)
+            hint = Gtk.Label(xalign=0, wrap=True,
+                             label="Nothing changes until you press Fix. Fixes marked with a password "
+                                   "prompt change system settings.")
+            hint.get_style_context().add_class("kos-dim")
+            outer.pack_start(hint, False, False, 4)
+
+            listbox = Gtk.ListBox(selection_mode=Gtk.SelectionMode.NONE)
+            self.rows = [CheckRow(check, self.fix) for check in checks]
+            for row in self.rows:
+                listbox.add(row)
+            scroller = Gtk.ScrolledWindow(hscrollbar_policy=Gtk.PolicyType.NEVER)
+            scroller.add(listbox)
+            outer.pack_start(scroller, True, True, 0)
+
+        def set_busy(self, busy):
+            self.busy = busy
+            self.again.set_sensitive(not busy)
+            for row in self.rows:
+                row.fix_button.set_sensitive(not busy)
+
+        def update_summary(self):
+            problems = sum(1 for row in self.rows if row.status.get_label() == "Problem")
+            if problems:
+                self.summary.set_label(f"{problems} problem{'s' if problems > 1 else ''} found")
+            else:
+                self.summary.set_label("Everything looks good")
+
+        def check_everything(self):
+            if self.busy:
+                return
+            self.set_busy(True)
+            self.summary.set_label("Checking…")
+            for row in self.rows:
+                row.set_state("checking")
+
+            def worker():
+                for row in self.rows:
+                    ok = row.check.passes()
+                    GLib.idle_add(row.set_state, "ok" if ok else "problem",
+                                  "" if ok or row.check.fix else "There is no automatic fix for this one.")
+                GLib.idle_add(self.done_checking)
+
+            threading.Thread(target=worker, daemon=True).start()
+
+        def done_checking(self):
+            self.set_busy(False)
+            self.update_summary()
+
+        def fix(self, row):
+            if self.busy:
+                return
+            self.set_busy(True)
+            row.set_state("fixing", "Waiting for your password…" if row.check.root else "")
+            env = dict(os.environ, SUDO_ASKPASS=ASKPASS, KOS_ASKPASS_TITLE="KOS Doctor")
+
+            def worker():
+                try:
+                    result = subprocess.run(row.check.fix_command(askpass=True), stdin=subprocess.DEVNULL,
+                                            capture_output=True, text=True, errors="replace", env=env)
+                    code, output = result.returncode, (result.stdout + result.stderr).strip()
+                except OSError as error:
+                    code, output = 1, str(error)
+                ok = code == 0 and row.check.passes()
+                GLib.idle_add(self.fix_finished, row, ok, code, output)
+
+            threading.Thread(target=worker, daemon=True).start()
+
+        def fix_finished(self, row, ok, code, output):
+            after = row.check.after
+            if ok:
+                row.set_state("ok", f"Fixed. {after}".strip())
+            elif code == 0:
+                row.set_state("failed", f"The fix ran, but the check still fails. {after}".strip())
+            else:
+                last = "\n".join(output.splitlines()[-3:])
+                row.set_state("failed", f"The fix did not work.{chr(10) + last if last else ''}")
+            self.set_busy(False)
+            self.update_summary()
+
+    window = DoctorWindow()
+    window.connect("destroy", Gtk.main_quit)
+    window.show_all()
+    for row in window.rows:
+        row.set_state("checking")
+    window.check_everything()
+    Gtk.main()
+    return 0
+
+
 def main():
     parser = argparse.ArgumentParser(prog="kos-doctor", description="Check for known KrelboyneOS problems and fix them.")
     group = parser.add_mutually_exclusive_group()
-    group.add_argument("--check", action="store_true", help="check everything (the default)")
+    group.add_argument("--check", action="store_true", help="check everything in the terminal")
     group.add_argument("--fix", metavar="ID", help="fix one problem, after asking")
     group.add_argument("--explain", metavar="ID", help="say what a check looks for and how it is fixed")
     parser.add_argument("-y", "--yes", action="store_true", help="with --fix, do not ask first")
@@ -129,7 +338,9 @@ def main():
         return fix(find(checks, args.fix), args.yes)
     if args.explain:
         return explain(find(checks, args.explain))
-    return check_all(checks)
+    if args.check or not (os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY")):
+        return check_all(checks)
+    return run_window(checks)
 
 
 if __name__ == "__main__":

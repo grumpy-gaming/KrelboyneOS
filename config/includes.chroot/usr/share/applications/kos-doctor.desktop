@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=KOS Doctor
+Comment=Find and fix common KrelboyneOS problems
+Exec=kos-doctor
+Icon=/usr/share/krelboyneos/branding/logo.png
+Terminal=false
+Categories=System;
