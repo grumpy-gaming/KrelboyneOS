@@ -19,7 +19,7 @@ import threading
 CHECKS_FILE = os.environ.get("KOS_DOCTOR_CHECKS", "/usr/share/kos-doctor/checks.ini")
 IGNORED_FILE = os.path.join(os.environ.get("XDG_CONFIG_HOME", os.path.expanduser("~/.config")),
                             "kos-doctor", "ignored")
-ASKPASS = "/usr/local/bin/kos-askpass"
+ASKPASS = "/usr/bin/kos-askpass"
 LOGO = "/usr/share/krelboyneos/branding/logo.png"
 TIMEOUT = 30  # seconds for one test or detail
 GROUPS = [("checkup", "Checkup"), ("catch-up", "Older versions")]

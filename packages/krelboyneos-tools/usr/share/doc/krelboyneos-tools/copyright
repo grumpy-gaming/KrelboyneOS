@@ -1,0 +1,7 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: krelboyneos-tools
+Source: https://github.com/grumpy-gaming/KrelboyneOS
+
+Files: *
+Copyright: 2026 grumpy-gaming <krelboyneos@gmail.com>
+License: see https://github.com/grumpy-gaming/KrelboyneOS

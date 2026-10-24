@@ -1,0 +1,17 @@
+#!/bin/sh
+set -e
+
+if [ "$1" = remove ] || [ "$1" = purge ]; then
+	systemctl disable kos-ssl-cert.service >/dev/null 2>&1 || true
+	# The links postinst left for older installs now point nowhere
+	for f in kos-askpass kos-browser-as-user kos-doctor kos-install-tools kos-software krelboyneos-netinfo; do
+		if [ -L "/usr/local/bin/$f" ] && [ "$(readlink "/usr/local/bin/$f")" = "/usr/bin/$f" ]; then
+			rm -f "/usr/local/bin/$f"
+		fi
+	done
+	if [ -d /run/systemd/system ]; then
+		systemctl daemon-reload || true
+	fi
+fi
+
+exit 0

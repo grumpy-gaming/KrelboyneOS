@@ -17,7 +17,7 @@ from gi.repository import Gdk, GdkPixbuf, GLib, Gtk
 
 TOOLS_FILE = os.environ.get("KOS_TOOLS_FILE", "/usr/share/kos-software/tools.ini")
 INSTALLER = os.environ.get("KOS_INSTALLER", "kos-install-tools")
-ASKPASS = "/usr/local/bin/kos-askpass"
+ASKPASS = "/usr/bin/kos-askpass"
 LOGO = "/usr/share/krelboyneos/branding/logo.png"
 
 # KOS teal on the dark theme

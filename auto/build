@@ -2,4 +2,10 @@
 
 set -e
 
+# KrelboyneOS's own tools ship as a package; build it and let live-build install it
+packages/build.sh
+mkdir -p config/packages.chroot
+rm -f config/packages.chroot/krelboyneos-tools_*.deb
+cp packages/dist/krelboyneos-tools_"$(sed -n 's/^Version: //p' packages/krelboyneos-tools/DEBIAN/control)"_all.deb config/packages.chroot/
+
 lb build noauto "${@}" 2>&1 | tee build.log

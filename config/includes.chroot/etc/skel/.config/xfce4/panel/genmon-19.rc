@@ -1,4 +1,4 @@
-Command=/usr/local/bin/krelboyneos-netinfo
+Command=/usr/bin/krelboyneos-netinfo
 UseLabel=0
 Text=(genmon)
 UpdatePeriod=5000

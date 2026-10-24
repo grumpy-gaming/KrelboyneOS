@@ -1,0 +1,21 @@
+#!/bin/sh
+set -e
+
+if [ "$1" = configure ]; then
+	# Older KrelboyneOS put these in /usr/local/bin, and existing settings (the panel's
+	# network readout, for one) still point there: leave a link to the packaged copy
+	for f in kos-askpass kos-browser-as-user kos-doctor kos-install-tools kos-software krelboyneos-netinfo; do
+		if [ -f "/usr/local/bin/$f" ] && [ ! -L "/usr/local/bin/$f" ]; then
+			ln -sf "/usr/bin/$f" "/usr/local/bin/$f"
+		fi
+	done
+
+	# Give this computer its own default SSL certificate (the ISO ships without one)
+	systemctl enable kos-ssl-cert.service >/dev/null 2>&1 || true
+	if [ -d /run/systemd/system ]; then
+		systemctl daemon-reload || true
+		systemctl start kos-ssl-cert.service || true
+	fi
+fi
+
+exit 0

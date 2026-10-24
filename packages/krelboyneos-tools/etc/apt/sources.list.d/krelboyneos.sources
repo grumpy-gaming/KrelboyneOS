@@ -1,0 +1,6 @@
+# KrelboyneOS's own packages (KOS Doctor, KOS Software and friends)
+Types: deb
+URIs: https://dl.krelboyneos.org/apt
+Suites: stable
+Components: main
+Signed-By: /usr/share/keyrings/krelboyneos-archive-keyring.gpg

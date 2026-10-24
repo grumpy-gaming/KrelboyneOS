@@ -1,4 +1,0 @@
-#!/bin/sh
-set -e
-# Create the default SSL certificate on installed systems at first boot
-systemctl enable kos-ssl-cert.service
