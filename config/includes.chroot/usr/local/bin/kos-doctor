@@ -1,0 +1,136 @@
+#!/usr/bin/python3
+# KOS Doctor: check for known KrelboyneOS problems and fix them one at a time.
+#   Checks: /usr/share/kos-doctor/checks.ini
+#   kos-doctor --check        check everything (exit 1 if anything needs fixing)
+#   kos-doctor --fix ID       show the fix for one check, ask, run it, check again
+#   kos-doctor --explain ID   say what a check looks for and what its fix does
+import argparse
+import configparser
+import os
+import subprocess
+import sys
+
+CHECKS_FILE = os.environ.get("KOS_DOCTOR_CHECKS", "/usr/share/kos-doctor/checks.ini")
+TIMEOUT = 30  # seconds for one test
+
+# KOS teal for OK, red for problems; plain text when not on a terminal
+if sys.stdout.isatty():
+    OK, BAD, DIM, END = "\033[1;36m", "\033[1;31m", "\033[2m", "\033[0m"
+else:
+    OK = BAD = DIM = END = ""
+
+
+class Check:
+    def __init__(self, key, section):
+        self.key = key
+        self.name = section.get("name", key)
+        self.test = section.get("test", "true")
+        self.fix = section.get("fix", "")
+        self.root = section.getboolean("root", fallback=False)
+        self.explain = section.get("explain", "")
+        self.after = section.get("after", "")
+
+    def passes(self):
+        try:
+            return subprocess.run(["sh", "-c", self.test], stdin=subprocess.DEVNULL,
+                                  stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                                  timeout=TIMEOUT).returncode == 0
+        except subprocess.TimeoutExpired:
+            return False
+
+    def fix_command(self):
+        """The command that applies the fix, as it will run."""
+        return ["sudo", "sh", "-c", self.fix] if self.root else ["sh", "-c", self.fix]
+
+
+def load_checks():
+    parser = configparser.ConfigParser(interpolation=None)
+    if not parser.read(CHECKS_FILE):
+        sys.exit(f"kos-doctor: cannot read {CHECKS_FILE}")
+    return [Check(key, parser[key]) for key in parser.sections()]
+
+
+def find(checks, key):
+    for check in checks:
+        if check.key == key:
+            return check
+    sys.exit(f"kos-doctor: no check called '{key}' (see kos-doctor --check)")
+
+
+def check_all(checks):
+    problems = 0
+    for check in checks:
+        if check.passes():
+            print(f"  {OK}OK{END}       {check.name}")
+        else:
+            problems += 1
+            fix = f"kos-doctor --fix {check.key}" if check.fix else "no automatic fix"
+            print(f"  {BAD}PROBLEM{END}  {check.name}  {DIM}({fix}){END}")
+    print()
+    if problems:
+        print(f"{problems} problem(s). 'kos-doctor --explain ID' says what each one is.")
+    else:
+        print("Everything looks good.")
+    return 1 if problems else 0
+
+
+def explain(check):
+    print(f"{check.name}  [{check.key}]")
+    if check.explain:
+        print(f"  {check.explain}")
+    print(f"  Status: {'OK' if check.passes() else 'needs fixing'}")
+    if check.fix:
+        print(f"  Fix{' (needs your password)' if check.root else ''}:")
+        print(f"    {' '.join(check.fix_command()[:-1])} '{check.fix}'")
+    return 0
+
+
+def fix(check, assume_yes):
+    if check.passes():
+        print(f"{check.name}: already OK, nothing to do.")
+        return 0
+    if not check.fix:
+        print(f"{check.name}: there is no automatic fix.")
+        if check.explain:
+            print(f"  {check.explain}")
+        return 1
+    print(f"{check.name}")
+    if check.explain:
+        print(f"  {check.explain}")
+    print("  This will run:")
+    print(f"    {' '.join(check.fix_command()[:-1])} '{check.fix}'")
+    if not assume_yes and input("  Run it? [y/N] ").strip().lower() not in ("y", "yes"):
+        print("  Not changed.")
+        return 1
+    if subprocess.run(check.fix_command()).returncode != 0:
+        print(f"  {BAD}The fix failed.{END}")
+        return 1
+    if check.passes():
+        print(f"  {OK}Fixed.{END}{' ' + check.after if check.after else ''}")
+        return 0
+    print(f"  {BAD}The fix ran, but the check still fails.{END}{' ' + check.after if check.after else ''}")
+    return 1
+
+
+def main():
+    parser = argparse.ArgumentParser(prog="kos-doctor", description="Check for known KrelboyneOS problems and fix them.")
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("--check", action="store_true", help="check everything (the default)")
+    group.add_argument("--fix", metavar="ID", help="fix one problem, after asking")
+    group.add_argument("--explain", metavar="ID", help="say what a check looks for and how it is fixed")
+    parser.add_argument("-y", "--yes", action="store_true", help="with --fix, do not ask first")
+    args = parser.parse_args()
+
+    if os.geteuid() == 0:
+        sys.exit("kos-doctor: run it as yourself, not as root; it asks for your password when a fix needs it")
+
+    checks = load_checks()
+    if args.fix:
+        return fix(find(checks, args.fix), args.yes)
+    if args.explain:
+        return explain(find(checks, args.explain))
+    return check_all(checks)
+
+
+if __name__ == "__main__":
+    sys.exit(main())
