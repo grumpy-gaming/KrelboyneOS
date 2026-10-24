@@ -1,3 +1,6 @@
 dconf-cli
 psmisc
 rfkill
+
+# Set the clock from the internet
+systemd-timesyncd

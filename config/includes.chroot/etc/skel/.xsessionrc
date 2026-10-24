@@ -1,0 +1,2 @@
+# Apps started from the menu also find tools in ~/.local/bin
+PATH="$HOME/.local/bin:$PATH"
