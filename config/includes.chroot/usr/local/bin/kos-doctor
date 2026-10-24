@@ -1,12 +1,14 @@
 #!/usr/bin/python3
-# KOS Doctor: a checkup for KrelboyneOS. Checks for common problems and fixes them one at a time.
+# KOS Doctor: a checkup for KrelboyneOS. Shows the computer's health and fixes common problems
+# one at a time.
 #   Checks: /usr/share/kos-doctor/checks.ini
 #   Ignored checks: ~/.config/kos-doctor/ignored (one id per line)
-#   kos-doctor                a window that checks everything, with a Fix button per problem
-#   kos-doctor --check        the same checks in the terminal (exit 1 if anything needs fixing)
+#   kos-doctor                a window: health overview, checks with a Fix button per problem
+#   kos-doctor --check        the same in the terminal (exit 1 if anything needs fixing)
 #   kos-doctor --fix ID       show the fix for one check, ask, run it, check again
 #   kos-doctor --explain ID   say what a check looks for and what its fix does
 #   kos-doctor --ignore ID    stop reporting a check (--unignore ID to report it again)
+# Health comes from udisks (drives), UPower (battery), statvfs and /proc/meminfo: no root needed.
 import argparse
 import configparser
 import os
@@ -20,13 +22,13 @@ IGNORED_FILE = os.path.join(os.environ.get("XDG_CONFIG_HOME", os.path.expanduser
 ASKPASS = "/usr/local/bin/kos-askpass"
 LOGO = "/usr/share/krelboyneos/branding/logo.png"
 TIMEOUT = 30  # seconds for one test or detail
-GROUPS = [("checkup", "Checkup"), ("catch-up", "Catch-up for older KrelboyneOS versions")]
+GROUPS = [("checkup", "Checkup"), ("catch-up", "Older versions")]
 
 # KOS teal for OK, red for problems; plain text when not on a terminal
 if sys.stdout.isatty():
-    OK, BAD, DIM, END = "\033[1;36m", "\033[1;31m", "\033[2m", "\033[0m"
+    OK, WARN, BAD, DIM, END = "\033[1;36m", "\033[1;33m", "\033[1;31m", "\033[2m", "\033[0m"
 else:
-    OK = BAD = DIM = END = ""
+    OK = WARN = BAD = DIM = END = ""
 
 
 def shell(command):
@@ -38,6 +40,141 @@ def shell(command):
     except subprocess.TimeoutExpired:
         return 1, ""
 
+
+# ---- health ----
+
+def level(value, warn, bad, high_is_bad=True):
+    """'ok', 'warn' or 'bad' for a value against two limits."""
+    if high_is_bad:
+        return "bad" if value >= bad else "warn" if value >= warn else "ok"
+    return "bad" if value <= bad else "warn" if value <= warn else "ok"
+
+
+def drive_cards(bus):
+    """One card per internal drive that reports health through udisks."""
+    from gi.repository import Gio, GLib
+    om = Gio.DBusProxy.new_sync(bus, 0, None, "org.freedesktop.UDisks2", "/org/freedesktop/UDisks2",
+                                "org.freedesktop.DBus.ObjectManager", None)
+    objects = om.call_sync("GetManagedObjects", None, 0, 5000, None).unpack()[0]
+    cards = []
+    for path, ifaces in sorted(objects.items()):
+        drive = ifaces.get("org.freedesktop.UDisks2.Drive")
+        if not drive or drive.get("Removable") or drive.get("MediaRemovable"):
+            continue
+        model = drive.get("Model") or "Drive"
+        nvme = ifaces.get("org.freedesktop.UDisks2.NVMe.Controller")
+        ata = ifaces.get("org.freedesktop.UDisks2.Drive.Ata")
+        if nvme:
+            proxy = Gio.DBusProxy.new_sync(bus, 0, None, "org.freedesktop.UDisks2", path,
+                                           "org.freedesktop.UDisks2.NVMe.Controller", None)
+            attrs = proxy.call_sync("SmartGetAttributes", GLib.Variant("(a{sv})", ({},)),
+                                    0, 10000, None).unpack()[0]
+            used = attrs.get("percent_used", 0)
+            spare = attrs.get("avail_spare", 100)
+            errors = attrs.get("media_errors", 0)
+            warnings = nvme.get("SmartCriticalWarning") or []
+            temp = nvme.get("SmartTemperature", 0) - 273 if nvme.get("SmartTemperature") else None
+            lvl = level(used, 80, 95)
+            if errors or spare < 20:
+                lvl = "warn" if lvl == "ok" else lvl
+            if warnings or spare < 10:
+                lvl = "bad"
+            facts = [f"{temp} °C" if temp is not None else None,
+                     f"{nvme.get('SmartPowerOnHours', 0):,} hours on",
+                     f"{errors} error{'s' if errors != 1 else ''}"]
+            lines = [model, " · ".join(f for f in facts if f)]
+            if warnings:
+                lines.append("Warning: " + ", ".join(warnings))
+            cards.append({"title": "SSD life", "value": f"{max(0, 100 - used)}% left",
+                          "fraction": max(0, 100 - used) / 100, "level": lvl, "lines": lines})
+        elif ata and ata.get("SmartSupported") and ata.get("SmartEnabled"):
+            failing = ata.get("SmartFailing")
+            bad_sectors = ata.get("SmartNumBadSectors", 0)
+            temp = ata.get("SmartTemperature", 0) - 273 if ata.get("SmartTemperature") else None
+            hours = ata.get("SmartPowerOnSeconds", 0) // 3600
+            lvl = "bad" if failing else "warn" if bad_sectors else "ok"
+            facts = [f"{temp} °C" if temp is not None else None, f"{hours:,} hours on",
+                     f"{bad_sectors} bad sector{'s' if bad_sectors != 1 else ''}"]
+            cards.append({"title": "Drive health", "value": "Failing" if failing else "Healthy",
+                          "fraction": None, "level": lvl,
+                          "lines": [model, " · ".join(f for f in facts if f)]})
+    return cards
+
+
+def battery_cards(bus):
+    from gi.repository import Gio
+    upower = Gio.DBusProxy.new_sync(bus, 0, None, "org.freedesktop.UPower", "/org/freedesktop/UPower",
+                                    "org.freedesktop.UPower", None)
+    cards = []
+    for path in upower.call_sync("EnumerateDevices", None, 0, 5000, None).unpack()[0]:
+        dev = Gio.DBusProxy.new_sync(bus, 0, None, "org.freedesktop.UPower", path,
+                                     "org.freedesktop.UPower.Device", None)
+        prop = lambda name: (dev.get_cached_property(name).unpack()
+                             if dev.get_cached_property(name) is not None else None)
+        if prop("Type") != 2 or not prop("PowerSupply"):  # 2 = battery; skip mice and such
+            continue
+        capacity = prop("Capacity") or 0
+        full, design = prop("EnergyFull") or 0, prop("EnergyFullDesign") or 0
+        lines = [f"Holds {full:.1f} of {design:.1f} Wh when full" if design else "",
+                 f"Charged to {prop('Percentage'):.0f}% now"]
+        cards.append({"title": "Battery health", "value": f"{capacity:.0f}% of new",
+                      "fraction": min(capacity, 100) / 100, "level": level(capacity, 70, 50, high_is_bad=False),
+                      "lines": [line for line in lines if line]})
+    return cards
+
+
+def disk_card():
+    st = os.statvfs("/")
+    total, free = st.f_blocks * st.f_frsize, st.f_bavail * st.f_frsize
+    taken = (st.f_blocks - st.f_bfree) * st.f_frsize
+    used = taken / (taken + free) if taken + free else 0  # as df counts it: root's reserve is not "used"
+    gb = lambda n: f"{n / 1e9:,.0f} GB" if n >= 1e10 else f"{n / 1e9:.1f} GB"
+    return {"title": "Disk space", "value": f"{used * 100:.0f}% used", "fraction": used,
+            "level": level(used * 100, 80, 90), "lines": [f"{gb(free)} free of {gb(total)}"]}
+
+
+def memory_card():
+    info = {}
+    with open("/proc/meminfo") as f:
+        for line in f:
+            key, value = line.split(":", 1)
+            info[key] = int(value.split()[0])  # kB
+    total, available = info["MemTotal"], info.get("MemAvailable", info["MemFree"])
+    used = 1 - available / total
+    return {"title": "Memory", "value": f"{used * 100:.0f}% in use", "fraction": used,
+            "level": level(used * 100, 85, 95),
+            "lines": [f"{(total - available) / 1048576:.1f} of {total / 1048576:.1f} GiB in use"]}
+
+
+def health():
+    """Cards for the overview: drives, disk space, battery, memory. Never raises."""
+    cards = []
+    try:
+        import gi
+        gi.require_version("Gio", "2.0")
+        from gi.repository import Gio
+        bus = Gio.bus_get_sync(Gio.BusType.SYSTEM, None)
+    except Exception:
+        bus = None
+    if bus is not None:
+        try:
+            cards += drive_cards(bus)
+        except Exception:
+            pass
+    if not any(c["title"] in ("SSD life", "Drive health") for c in cards):
+        cards.append({"title": "Drive health", "value": "Not available", "fraction": None, "level": "none",
+                      "lines": ["This drive does not report its health (common in virtual machines)."]})
+    cards.append(disk_card())
+    if bus is not None:
+        try:
+            cards += battery_cards(bus)
+        except Exception:
+            pass
+    cards.append(memory_card())
+    return cards
+
+
+# ---- checks ----
 
 class Check:
     def __init__(self, key, section):
@@ -102,6 +239,13 @@ def find(checks, key):
 # ---- terminal ----
 
 def check_all(checks):
+    colour = {"ok": OK, "warn": WARN, "bad": BAD, "none": DIM}
+    print("Health:")
+    for card in health():
+        print(f"  {colour[card['level']]}{card['title']}: {card['value']}{END}")
+        for line in card["lines"]:
+            print(f"    {DIM}{line}{END}")
+    print()
     ignored = load_ignored()
     problems = 0
     for group, title in GROUPS:
@@ -187,22 +331,57 @@ def run_window(checks):
     gi.require_version("GdkPixbuf", "2.0")
     from gi.repository import Gdk, GdkPixbuf, GLib, Gtk
 
-    # KOS teal on the dark theme, as in KOS Software
+    # KOS teal on the dark theme, as in KOS Software; amber and red for warnings
     css = Gtk.CssProvider()
     css.load_from_data(b"""
     .kos-name { font-weight: bold; font-size: 1.1em; }
     .kos-dim { opacity: 0.7; }
     .kos-ok { color: #3fd0ef; font-weight: bold; }
+    .kos-warn { color: #e8b04a; font-weight: bold; }
     .kos-problem { color: #ef6b6b; font-weight: bold; }
     .kos-summary { font-size: 1.2em; font-weight: bold; }
-    .kos-group { font-weight: bold; color: #3fd0ef; }
     .kos-command { font-family: monospace; opacity: 0.8; }
+    .kos-card { background-color: alpha(#3fd0ef, 0.06); border: 1px solid alpha(#3fd0ef, 0.25);
+                border-radius: 8px; padding: 12px; }
+    .kos-card-title { opacity: 0.75; }
+    .kos-card-value { font-size: 1.5em; font-weight: bold; }
+    .kos-card levelbar trough { min-height: 8px; border-radius: 4px; }
+    .kos-card levelbar block.filled { background-color: #3fd0ef; border-radius: 4px; }
+    .kos-card.warn levelbar block.filled { background-color: #e8b04a; }
+    .kos-card.bad levelbar block.filled { background-color: #ef6b6b; }
+    .kos-card.warn .kos-card-value { color: #e8b04a; }
+    .kos-card.bad .kos-card-value { color: #ef6b6b; }
+    .kos-card.ok .kos-card-value { color: #3fd0ef; }
     button.kos-accent { background-image: none; background-color: #1f7f99; color: #ffffff; }
     button.kos-accent:hover { background-color: #3fd0ef; color: #03060f; }
     """)
     Gtk.StyleContext.add_provider_for_screen(Gdk.Screen.get_default(), css,
                                              Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
     Gtk.Settings.get_default().set_property("gtk-application-prefer-dark-theme", True)
+
+    def health_card(card):
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
+        box.set_size_request(230, -1)
+        style = box.get_style_context()
+        style.add_class("kos-card")
+        style.add_class(card["level"])
+        title = Gtk.Label(label=card["title"], xalign=0)
+        title.get_style_context().add_class("kos-card-title")
+        box.pack_start(title, False, False, 0)
+        value = Gtk.Label(label=card["value"], xalign=0)
+        value.get_style_context().add_class("kos-card-value")
+        box.pack_start(value, False, False, 0)
+        if card["fraction"] is not None:
+            bar = Gtk.LevelBar(min_value=0, max_value=1, value=max(0.0, min(1.0, card["fraction"])))
+            for name in ("low", "high", "full"):  # our own colours instead of GTK's
+                bar.remove_offset_value(name)
+            box.pack_start(bar, False, False, 2)
+        for line in card["lines"]:
+            label = Gtk.Label(label=line, xalign=0, wrap=True, max_width_chars=34)
+            label.get_style_context().add_class("kos-dim")
+            box.pack_start(label, False, False, 0)
+        box.show_all()
+        return box
 
     class CheckRow(Gtk.ListBoxRow):
         def __init__(self, check, window):
@@ -253,9 +432,8 @@ def run_window(checks):
             labels = {"checking": "Checking", "ok": "OK", "problem": "Problem",
                       "fixing": "Fixing…", "failed": "Problem", "ignored": "Ignored"}
             style = self.status.get_style_context()
-            style.remove_class("kos-ok")
-            style.remove_class("kos-problem")
-            style.remove_class("kos-dim")
+            for name in ("kos-ok", "kos-problem", "kos-dim"):
+                style.remove_class(name)
             if state == "ok":
                 style.add_class("kos-ok")
             elif state in ("problem", "failed"):
@@ -280,12 +458,11 @@ def run_window(checks):
     class DoctorWindow(Gtk.Window):
         def __init__(self):
             super().__init__(title="KOS Doctor")
-            self.set_default_size(860, 680)
+            self.set_default_size(900, 720)
             self.busy = False
             self.ignored = load_ignored()
 
-            header = Gtk.HeaderBar(title="KOS Doctor", subtitle="A checkup for KrelboyneOS",
-                                   show_close_button=True)
+            header = Gtk.HeaderBar(show_close_button=True)
             header.set_decoration_layout(":minimize,maximize,close")
             self.set_titlebar(header)
             try:
@@ -298,32 +475,50 @@ def run_window(checks):
             self.again.connect("clicked", lambda b: self.check_everything())
             header.pack_end(self.again)
 
-            outer = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6, margin=12)
-            self.add(outer)
-            self.summary = Gtk.Label(xalign=0)
-            self.summary.get_style_context().add_class("kos-summary")
-            outer.pack_start(self.summary, False, False, 0)
-            hint = Gtk.Label(xalign=0, wrap=True,
-                             label="Nothing changes until you press Fix. Fixes that change system settings "
-                                   "ask for your password.")
-            hint.get_style_context().add_class("kos-dim")
-            outer.pack_start(hint, False, False, 4)
-
-            listbox = Gtk.ListBox(selection_mode=Gtk.SelectionMode.NONE)
+            # Two pages: the checkup, and catch-up fixes for older KrelboyneOS versions
+            self.stack = Gtk.Stack(transition_type=Gtk.StackTransitionType.CROSSFADE)
+            header.set_custom_title(Gtk.StackSwitcher(stack=self.stack))
+            self.add(self.stack)
             self.rows = []
+            self.pages = {}
+
             for group, title in GROUPS:
-                heading = Gtk.ListBoxRow(activatable=False, selectable=False)
-                label = Gtk.Label(label=title, xalign=0, margin_top=12, margin_bottom=4, margin_start=10)
-                label.get_style_context().add_class("kos-group")
-                heading.add(label)
-                listbox.add(heading)
+                page = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6, margin=12)
+                if group == "checkup":
+                    self.summary = Gtk.Label(xalign=0)
+                    self.summary.get_style_context().add_class("kos-summary")
+                    page.pack_start(self.summary, False, False, 0)
+                    self.cards = Gtk.FlowBox(selection_mode=Gtk.SelectionMode.NONE, homogeneous=True,
+                                             min_children_per_line=2, max_children_per_line=4,
+                                             column_spacing=10, row_spacing=10)
+                    page.pack_start(self.cards, False, False, 6)
+                    hint_text = ("Nothing changes until you press Fix. Fixes that change system settings "
+                                 "ask for your password.")
+                else:
+                    hint_text = ("Fixes for problems that older KrelboyneOS versions shipped with. "
+                                 "On an up-to-date system these are all OK.")
+                hint = Gtk.Label(xalign=0, wrap=True, label=hint_text)
+                hint.get_style_context().add_class("kos-dim")
+                page.pack_start(hint, False, False, 4)
+
+                listbox = Gtk.ListBox(selection_mode=Gtk.SelectionMode.NONE)
                 for check in (c for c in checks if c.group == group):
                     row = CheckRow(check, self)
                     self.rows.append(row)
                     listbox.add(row)
-            scroller = Gtk.ScrolledWindow(hscrollbar_policy=Gtk.PolicyType.NEVER)
-            scroller.add(listbox)
-            outer.pack_start(scroller, True, True, 0)
+                if group == "checkup":
+                    # the whole checkup page scrolls, cards included
+                    page.pack_start(listbox, False, False, 0)
+                    scroller = Gtk.ScrolledWindow(hscrollbar_policy=Gtk.PolicyType.NEVER)
+                    scroller.add(page)
+                    self.stack.add_titled(scroller, group, title)
+                    self.pages[group] = scroller
+                else:
+                    scroller = Gtk.ScrolledWindow(hscrollbar_policy=Gtk.PolicyType.NEVER)
+                    scroller.add(listbox)
+                    page.pack_start(scroller, True, True, 0)
+                    self.stack.add_titled(page, group, title)
+                    self.pages[group] = page
 
         def set_busy(self, busy):
             self.busy = busy
@@ -332,10 +527,28 @@ def run_window(checks):
                 row.fix_button.set_sensitive(not busy)
                 row.ignore_button.set_sensitive(not busy)
 
+        def show_health(self, cards):
+            for child in self.cards.get_children():
+                self.cards.remove(child)
+            for card in cards:
+                self.cards.add(health_card(card))
+            self.cards.show_all()
+
         def update_summary(self):
-            problems = sum(1 for row in self.rows if row.state in ("problem", "failed"))
-            if problems:
-                self.summary.set_label(f"{problems} problem{'s' if problems > 1 else ''} found")
+            counts = {group: sum(1 for row in self.rows
+                                 if row.check.group == group and row.state in ("problem", "failed"))
+                      for group, _ in GROUPS}
+            older = counts["catch-up"]
+            self.stack.child_set_property(self.pages["catch-up"], "title",
+                                          f"Older versions ({older})" if older else "Older versions")
+            here = counts["checkup"]
+            if here and older:
+                self.summary.set_label(f"{here} problem{'s' if here > 1 else ''} here, "
+                                       f"{older} on Older versions")
+            elif here:
+                self.summary.set_label(f"{here} problem{'s' if here > 1 else ''} found")
+            elif older:
+                self.summary.set_label(f"No problems here; {older} on Older versions")
             else:
                 self.summary.set_label("Everything looks good")
 
@@ -357,6 +570,7 @@ def run_window(checks):
                 row.set_state("checking")
 
             def worker():
+                GLib.idle_add(self.show_health, health())
                 for row in self.rows:
                     self.check_one(row)
                 GLib.idle_add(self.done_checking)
@@ -425,9 +639,9 @@ def run_window(checks):
 
 
 def main():
-    parser = argparse.ArgumentParser(prog="kos-doctor", description="A checkup for KrelboyneOS: find and fix common problems.")
+    parser = argparse.ArgumentParser(prog="kos-doctor", description="A checkup for KrelboyneOS: health overview, find and fix common problems.")
     group = parser.add_mutually_exclusive_group()
-    group.add_argument("--check", action="store_true", help="check everything in the terminal")
+    group.add_argument("--check", action="store_true", help="health and checks in the terminal")
     group.add_argument("--fix", metavar="ID", help="fix one problem, after asking")
     group.add_argument("--explain", metavar="ID", help="say what a check looks for and how it is fixed")
     group.add_argument("--ignore", metavar="ID", help="stop reporting a check")
