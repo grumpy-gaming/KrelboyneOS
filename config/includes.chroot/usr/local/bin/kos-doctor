@@ -1,10 +1,12 @@
 #!/usr/bin/python3
-# KOS Doctor: check for known KrelboyneOS problems and fix them one at a time.
+# KOS Doctor: a checkup for KrelboyneOS. Checks for common problems and fixes them one at a time.
 #   Checks: /usr/share/kos-doctor/checks.ini
+#   Ignored checks: ~/.config/kos-doctor/ignored (one id per line)
 #   kos-doctor                a window that checks everything, with a Fix button per problem
 #   kos-doctor --check        the same checks in the terminal (exit 1 if anything needs fixing)
 #   kos-doctor --fix ID       show the fix for one check, ask, run it, check again
 #   kos-doctor --explain ID   say what a check looks for and what its fix does
+#   kos-doctor --ignore ID    stop reporting a check (--unignore ID to report it again)
 import argparse
 import configparser
 import os
@@ -13,9 +15,12 @@ import sys
 import threading
 
 CHECKS_FILE = os.environ.get("KOS_DOCTOR_CHECKS", "/usr/share/kos-doctor/checks.ini")
+IGNORED_FILE = os.path.join(os.environ.get("XDG_CONFIG_HOME", os.path.expanduser("~/.config")),
+                            "kos-doctor", "ignored")
 ASKPASS = "/usr/local/bin/kos-askpass"
 LOGO = "/usr/share/krelboyneos/branding/logo.png"
-TIMEOUT = 30  # seconds for one test
+TIMEOUT = 30  # seconds for one test or detail
+GROUPS = [("checkup", "Checkup"), ("catch-up", "Catch-up for older KrelboyneOS versions")]
 
 # KOS teal for OK, red for problems; plain text when not on a terminal
 if sys.stdout.isatty():
@@ -24,23 +29,36 @@ else:
     OK = BAD = DIM = END = ""
 
 
+def shell(command):
+    """Run a shell command as the user; return (exit code, output)."""
+    try:
+        result = subprocess.run(["sh", "-c", command], stdin=subprocess.DEVNULL, capture_output=True,
+                                text=True, errors="replace", timeout=TIMEOUT)
+        return result.returncode, result.stdout.strip()
+    except subprocess.TimeoutExpired:
+        return 1, ""
+
+
 class Check:
     def __init__(self, key, section):
         self.key = key
         self.name = section.get("name", key)
+        self.group = section.get("group", "checkup")
         self.test = section.get("test", "true")
+        self.detail = section.get("detail", "")
         self.fix = section.get("fix", "")
         self.root = section.getboolean("root", fallback=False)
         self.explain = section.get("explain", "")
         self.after = section.get("after", "")
 
     def passes(self):
-        try:
-            return subprocess.run(["sh", "-c", self.test], stdin=subprocess.DEVNULL,
-                                  stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                                  timeout=TIMEOUT).returncode == 0
-        except subprocess.TimeoutExpired:
-            return False
+        return shell(self.test)[0] == 0
+
+    def details(self):
+        """Short result text, such as '3 update(s) waiting' (at most 4 lines)."""
+        if not self.detail:
+            return ""
+        return "\n".join(shell(self.detail)[1].splitlines()[:4])
 
     def fix_command(self, askpass=False):
         """The command that applies the fix. In the window, sudo asks with kos-askpass (-A)."""
@@ -60,6 +78,20 @@ def load_checks():
     return [Check(key, parser[key]) for key in parser.sections()]
 
 
+def load_ignored():
+    try:
+        with open(IGNORED_FILE) as f:
+            return {line.strip() for line in f if line.strip()}
+    except OSError:
+        return set()
+
+
+def save_ignored(ignored):
+    os.makedirs(os.path.dirname(IGNORED_FILE), exist_ok=True)
+    with open(IGNORED_FILE, "w") as f:
+        f.writelines(f"{key}\n" for key in sorted(ignored))
+
+
 def find(checks, key):
     for check in checks:
         if check.key == key:
@@ -70,15 +102,23 @@ def find(checks, key):
 # ---- terminal ----
 
 def check_all(checks):
+    ignored = load_ignored()
     problems = 0
-    for check in checks:
-        if check.passes():
-            print(f"  {OK}OK{END}       {check.name}")
-        else:
-            problems += 1
-            fix = f"kos-doctor --fix {check.key}" if check.fix else "no automatic fix"
-            print(f"  {BAD}PROBLEM{END}  {check.name}  {DIM}({fix}){END}")
-    print()
+    for group, title in GROUPS:
+        print(f"{title}:")
+        for check in (c for c in checks if c.group == group):
+            if check.key in ignored:
+                print(f"  {DIM}IGNORED  {check.name}  (kos-doctor --unignore {check.key}){END}")
+                continue
+            ok = check.passes()
+            status = f"{OK}OK{END}     " if ok else f"{BAD}PROBLEM{END}"
+            if not ok:
+                problems += 1
+            hint = "" if ok else f"  {DIM}({'kos-doctor --fix ' + check.key if check.fix else 'no automatic fix'}){END}"
+            print(f"  {status}  {check.name}{hint}")
+            for line in check.details().splitlines():
+                print(f"             {DIM}{line}{END}")
+        print()
     if problems:
         print(f"{problems} problem(s). 'kos-doctor --explain ID' says what each one is.")
     else:
@@ -91,6 +131,9 @@ def explain(check):
     if check.explain:
         print(f"  {check.explain}")
     print(f"  Status: {'OK' if check.passes() else 'needs fixing'}")
+    details = check.details()
+    if details:
+        print("  " + details.replace("\n", "\n  "))
     if check.fix:
         print(f"  Fix{' (needs your password)' if check.root else ''}:")
         print(f"    {check.shown_command()}")
@@ -124,6 +167,17 @@ def fix(check, assume_yes):
     return 1
 
 
+def set_ignored(check, ignore):
+    ignored = load_ignored()
+    if ignore:
+        ignored.add(check.key)
+    else:
+        ignored.discard(check.key)
+    save_ignored(ignored)
+    print(f"{check.name}: {'ignored' if ignore else 'checked again from now on'}.")
+    return 0
+
+
 # ---- window ----
 
 def run_window(checks):
@@ -141,6 +195,7 @@ def run_window(checks):
     .kos-ok { color: #3fd0ef; font-weight: bold; }
     .kos-problem { color: #ef6b6b; font-weight: bold; }
     .kos-summary { font-size: 1.2em; font-weight: bold; }
+    .kos-group { font-weight: bold; color: #3fd0ef; }
     .kos-command { font-family: monospace; opacity: 0.8; }
     button.kos-accent { background-image: none; background-color: #1f7f99; color: #ffffff; }
     button.kos-accent:hover { background-color: #3fd0ef; color: #03060f; }
@@ -150,9 +205,10 @@ def run_window(checks):
     Gtk.Settings.get_default().set_property("gtk-application-prefer-dark-theme", True)
 
     class CheckRow(Gtk.ListBoxRow):
-        def __init__(self, check, on_fix):
+        def __init__(self, check, window):
             super().__init__(activatable=False)
             self.check = check
+            self.state = "checking"
             box = Gtk.Box(spacing=12, margin=10)
             self.status = Gtk.Label(label="…", width_chars=9, xalign=0)
             box.pack_start(self.status, False, False, 0)
@@ -161,6 +217,8 @@ def run_window(checks):
             name = Gtk.Label(label=check.name, xalign=0)
             name.get_style_context().add_class("kos-name")
             text.pack_start(name, False, False, 0)
+            self.result = Gtk.Label(xalign=0, wrap=True, max_width_chars=70, selectable=True)
+            text.pack_start(self.result, False, False, 0)
             self.detail = Gtk.Label(label=check.explain, xalign=0, wrap=True, max_width_chars=70)
             self.detail.get_style_context().add_class("kos-dim")
             text.pack_start(self.detail, False, False, 0)
@@ -176,33 +234,45 @@ def run_window(checks):
             self.show_button = Gtk.ToggleButton(label="Show command")
             self.show_button.connect("toggled", lambda b: self.command.set_visible(b.get_active()))
             buttons.pack_start(self.show_button, False, False, 0)
+            self.ignore_button = Gtk.Button(label="Ignore")
+            self.ignore_button.set_tooltip_text("Stop reporting this check")
+            self.ignore_button.connect("clicked", lambda b: window.toggle_ignore(self))
+            buttons.pack_start(self.ignore_button, False, False, 0)
             self.fix_button = Gtk.Button(label="Fix")
             if check.root:
                 self.fix_button.set_tooltip_text("Needs your password")
             self.fix_button.get_style_context().add_class("kos-accent")
-            self.fix_button.connect("clicked", lambda b: on_fix(self))
+            self.fix_button.connect("clicked", lambda b: window.fix(self))
             buttons.pack_start(self.fix_button, False, False, 0)
             box.pack_end(buttons, False, False, 0)
             self.add(box)
 
-        def set_state(self, state, note=""):
-            """state: checking, ok, problem, fixing, failed"""
+        def set_state(self, state, note="", result=""):
+            """state: checking, ok, problem, fixing, failed, ignored"""
+            self.state = state
             labels = {"checking": "Checking", "ok": "OK", "problem": "Problem",
-                      "fixing": "Fixing…", "failed": "Problem"}
+                      "fixing": "Fixing…", "failed": "Problem", "ignored": "Ignored"}
             style = self.status.get_style_context()
             style.remove_class("kos-ok")
             style.remove_class("kos-problem")
+            style.remove_class("kos-dim")
             if state == "ok":
                 style.add_class("kos-ok")
             elif state in ("problem", "failed"):
                 style.add_class("kos-problem")
+            elif state == "ignored":
+                style.add_class("kos-dim")
             self.status.set_label(labels[state])
             needs_fix = state in ("problem", "failed")
+            self.result.set_label(result)
+            self.result.set_visible(bool(result) and state != "ignored")
             self.detail.set_visible(needs_fix and bool(self.check.explain))
             self.note.set_label(note)
             self.note.set_visible(bool(note))
             self.fix_button.set_visible(needs_fix and bool(self.check.fix))
             self.show_button.set_visible(needs_fix and bool(self.check.fix))
+            self.ignore_button.set_visible(needs_fix or state == "ignored")
+            self.ignore_button.set_label("Stop ignoring" if state == "ignored" else "Ignore")
             if not needs_fix:
                 self.show_button.set_active(False)
             self.command.set_visible(self.show_button.get_active())
@@ -210,10 +280,11 @@ def run_window(checks):
     class DoctorWindow(Gtk.Window):
         def __init__(self):
             super().__init__(title="KOS Doctor")
-            self.set_default_size(820, 640)
+            self.set_default_size(860, 680)
             self.busy = False
+            self.ignored = load_ignored()
 
-            header = Gtk.HeaderBar(title="KOS Doctor", subtitle="Find and fix common KrelboyneOS problems",
+            header = Gtk.HeaderBar(title="KOS Doctor", subtitle="A checkup for KrelboyneOS",
                                    show_close_button=True)
             header.set_decoration_layout(":minimize,maximize,close")
             self.set_titlebar(header)
@@ -233,15 +304,23 @@ def run_window(checks):
             self.summary.get_style_context().add_class("kos-summary")
             outer.pack_start(self.summary, False, False, 0)
             hint = Gtk.Label(xalign=0, wrap=True,
-                             label="Nothing changes until you press Fix. Fixes marked with a password "
-                                   "prompt change system settings.")
+                             label="Nothing changes until you press Fix. Fixes that change system settings "
+                                   "ask for your password.")
             hint.get_style_context().add_class("kos-dim")
             outer.pack_start(hint, False, False, 4)
 
             listbox = Gtk.ListBox(selection_mode=Gtk.SelectionMode.NONE)
-            self.rows = [CheckRow(check, self.fix) for check in checks]
-            for row in self.rows:
-                listbox.add(row)
+            self.rows = []
+            for group, title in GROUPS:
+                heading = Gtk.ListBoxRow(activatable=False, selectable=False)
+                label = Gtk.Label(label=title, xalign=0, margin_top=12, margin_bottom=4, margin_start=10)
+                label.get_style_context().add_class("kos-group")
+                heading.add(label)
+                listbox.add(heading)
+                for check in (c for c in checks if c.group == group):
+                    row = CheckRow(check, self)
+                    self.rows.append(row)
+                    listbox.add(row)
             scroller = Gtk.ScrolledWindow(hscrollbar_policy=Gtk.PolicyType.NEVER)
             scroller.add(listbox)
             outer.pack_start(scroller, True, True, 0)
@@ -251,13 +330,23 @@ def run_window(checks):
             self.again.set_sensitive(not busy)
             for row in self.rows:
                 row.fix_button.set_sensitive(not busy)
+                row.ignore_button.set_sensitive(not busy)
 
         def update_summary(self):
-            problems = sum(1 for row in self.rows if row.status.get_label() == "Problem")
+            problems = sum(1 for row in self.rows if row.state in ("problem", "failed"))
             if problems:
                 self.summary.set_label(f"{problems} problem{'s' if problems > 1 else ''} found")
             else:
                 self.summary.set_label("Everything looks good")
+
+        def check_one(self, row):
+            """Runs in a worker thread."""
+            if row.check.key in self.ignored:
+                GLib.idle_add(row.set_state, "ignored")
+                return
+            ok = row.check.passes()
+            note = "" if ok or row.check.fix else "There is no automatic fix for this one."
+            GLib.idle_add(row.set_state, "ok" if ok else "problem", note, row.check.details())
 
         def check_everything(self):
             if self.busy:
@@ -269,9 +358,7 @@ def run_window(checks):
 
             def worker():
                 for row in self.rows:
-                    ok = row.check.passes()
-                    GLib.idle_add(row.set_state, "ok" if ok else "problem",
-                                  "" if ok or row.check.fix else "There is no automatic fix for this one.")
+                    self.check_one(row)
                 GLib.idle_add(self.done_checking)
 
             threading.Thread(target=worker, daemon=True).start()
@@ -279,6 +366,22 @@ def run_window(checks):
         def done_checking(self):
             self.set_busy(False)
             self.update_summary()
+
+        def toggle_ignore(self, row):
+            if self.busy:
+                return
+            if row.check.key in self.ignored:
+                self.ignored.discard(row.check.key)
+            else:
+                self.ignored.add(row.check.key)
+            save_ignored(self.ignored)
+            self.set_busy(True)
+
+            def worker():
+                self.check_one(row)
+                GLib.idle_add(self.done_checking)
+
+            threading.Thread(target=worker, daemon=True).start()
 
         def fix(self, row):
             if self.busy:
@@ -295,19 +398,19 @@ def run_window(checks):
                 except OSError as error:
                     code, output = 1, str(error)
                 ok = code == 0 and row.check.passes()
-                GLib.idle_add(self.fix_finished, row, ok, code, output)
+                GLib.idle_add(self.fix_finished, row, ok, code, output, row.check.details())
 
             threading.Thread(target=worker, daemon=True).start()
 
-        def fix_finished(self, row, ok, code, output):
+        def fix_finished(self, row, ok, code, output, details):
             after = row.check.after
             if ok:
-                row.set_state("ok", f"Fixed. {after}".strip())
+                row.set_state("ok", f"Fixed. {after}".strip(), details)
             elif code == 0:
-                row.set_state("failed", f"The fix ran, but the check still fails. {after}".strip())
+                row.set_state("failed", f"The fix ran, but the check still fails. {after}".strip(), details)
             else:
                 last = "\n".join(output.splitlines()[-3:])
-                row.set_state("failed", f"The fix did not work.{chr(10) + last if last else ''}")
+                row.set_state("failed", f"The fix did not work.{chr(10) + last if last else ''}", details)
             self.set_busy(False)
             self.update_summary()
 
@@ -322,11 +425,13 @@ def run_window(checks):
 
 
 def main():
-    parser = argparse.ArgumentParser(prog="kos-doctor", description="Check for known KrelboyneOS problems and fix them.")
+    parser = argparse.ArgumentParser(prog="kos-doctor", description="A checkup for KrelboyneOS: find and fix common problems.")
     group = parser.add_mutually_exclusive_group()
     group.add_argument("--check", action="store_true", help="check everything in the terminal")
     group.add_argument("--fix", metavar="ID", help="fix one problem, after asking")
     group.add_argument("--explain", metavar="ID", help="say what a check looks for and how it is fixed")
+    group.add_argument("--ignore", metavar="ID", help="stop reporting a check")
+    group.add_argument("--unignore", metavar="ID", help="report an ignored check again")
     parser.add_argument("-y", "--yes", action="store_true", help="with --fix, do not ask first")
     args = parser.parse_args()
 
@@ -338,6 +443,8 @@ def main():
         return fix(find(checks, args.fix), args.yes)
     if args.explain:
         return explain(find(checks, args.explain))
+    if args.ignore or args.unignore:
+        return set_ignored(find(checks, args.ignore or args.unignore), bool(args.ignore))
     if args.check or not (os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY")):
         return check_all(checks)
     return run_window(checks)
