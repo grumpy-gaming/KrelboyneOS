@@ -7,10 +7,10 @@ cp $S/welcome.png $B/krelboyneos-welcome.png
 sed -i \
   -e 's|^\( *productName:\) .*|\1 "KrelboyneOS"|' \
   -e 's|^\( *shortProductName:\) .*|\1 "KrelboyneOS"|' \
-  -e 's|^\( *version:\) .*|\1 "0.1.4"|' \
-  -e 's|^\( *shortVersion:\) .*|\1 "0.1.4"|' \
-  -e 's|^\( *versionedName:\) .*|\1 "KrelboyneOS 0.1.4"|' \
-  -e 's|^\( *shortVersionedName:\) .*|\1 "KrelboyneOS 0.1.4"|' \
+  -e 's|^\( *version:\) .*|\1 "0.1.5"|' \
+  -e 's|^\( *shortVersion:\) .*|\1 "0.1.5"|' \
+  -e 's|^\( *versionedName:\) .*|\1 "KrelboyneOS 0.1.5"|' \
+  -e 's|^\( *shortVersionedName:\) .*|\1 "KrelboyneOS 0.1.5"|' \
   -e 's|^\( *bootloaderEntryName:\) .*|\1 "KrelboyneOS"|' \
   -e 's|^\( *productLogo:\) .*|\1 "krelboyneos-logo.png"|' \
   -e 's|^\( *productIcon:\) .*|\1 "krelboyneos-logo.png"|' \
