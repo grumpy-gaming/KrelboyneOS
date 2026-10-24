@@ -8,7 +8,7 @@ A Debian 13 (trixie) live and installable Linux distribution for developers and 
 
 Website: [krelboyneos.org](https://krelboyneos.org)
 
-**Status: 0.1.2 alpha.** It boots and installs in a virtual machine, including with full-disk encryption, and runs installed on a Dell Latitude 7420. Testing on more hardware is still ahead.
+**Status: 0.1.3 alpha.** It boots and installs in a virtual machine, including with full-disk encryption, and runs installed on a Dell Latitude 7420. Testing on more hardware is still ahead.
 
 ## What it is
 
@@ -42,6 +42,7 @@ It started as a Linux From Scratch idea and became a Debian-based distro, so the
 - OpenVPN and WireGuard
 - aircrack-ng, John the Ripper, hashcat, Hydra, sqlmap, gobuster, Nuclei
 - Bruno, Metasploit, BloodHound CE, Burp Suite Community and about 70 more optional tools install on demand from the KOS Software app (System menu), which also updates the system and opens GNOME Software for everything else
+- KOS Doctor (System menu): a checkup that spots common problems, such as updates waiting, failed services or a full disk, and fixes them with one click
 
 **Everyday apps**
 - Firefox ESR, GIMP, Claude Desktop
@@ -51,6 +52,7 @@ It started as a Linux From Scratch idea and became a Debian-based distro, so the
 
 **Hardware support**
 - PipeWire sound with a volume control in the panel
+- Clock set from the internet
 - Non-free firmware for common Wi-Fi, Bluetooth, sound and graphics hardware (Intel, Realtek)
 
 The security tools are for learning and for testing systems you own or have written permission to test.
