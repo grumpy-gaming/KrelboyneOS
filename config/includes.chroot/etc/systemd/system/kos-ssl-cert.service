@@ -1,0 +1,15 @@
+# KrelboyneOS: give this computer its own default ("snakeoil") SSL certificate.
+# The ISO ships without one so no two installs share a key; live-config makes one
+# for the live session, but nothing does on an installed system, and PostgreSQL
+# will not start without it. Does nothing once the certificate exists.
+[Unit]
+Description=Create this computer's default SSL certificate
+ConditionPathExists=!/etc/ssl/certs/ssl-cert-snakeoil.pem
+After=local-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/sbin/make-ssl-cert generate-default-snakeoil --force-overwrite
+
+[Install]
+WantedBy=multi-user.target
