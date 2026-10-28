@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>KrelboyneOS — a Debian-based Linux distro for developers and security learners</title>
-  <meta name="description" content="KrelboyneOS is a Debian 13 live and installable Linux distribution with an Xfce desktop, development tools and security tools already set up. 0.1.4 alpha.">
+  <meta name="description" content="KrelboyneOS is a Debian 13 live and installable Linux distribution with an Xfce desktop, development tools and security tools already set up. 0.1.5 alpha.">
   <meta name="theme-color" content="#060b12">
   <meta property="og:type" content="website">
   <meta property="og:title" content="KrelboyneOS">
@@ -40,7 +40,7 @@
 <header class="hero" id="top">
   <div class="wrap">
     <img class="logo" src="img/kos-banner.jpg" alt="KrelboyneOS — based on Debian" width="1600" height="893">
-    <span class="badge">0.1.4 alpha</span>
+    <span class="badge">0.1.5 alpha</span>
     <h1>A Linux desktop that is <span>ready for dev and security work</span> the moment it installs</h1>
     <p class="lead">KrelboyneOS is a Debian 13 live and installable distro with an Xfce desktop, a tuned shell and the tools already set up. No afternoon of setup first.</p>
     <div class="btn-row">
@@ -73,7 +73,7 @@
       <div class="window">
         <div class="window-bar"><div class="dots"><i></i><i></i><i></i></div><span class="title">status.log</span></div>
         <div class="window-body">
-          <p><strong>0.1.4 alpha.</strong> It boots and installs in a virtual machine, including with full-disk encryption, and runs installed on a Dell Latitude 7420.</p>
+          <p><strong>0.1.5 alpha.</strong> It boots and installs in a virtual machine, including with full-disk encryption, and runs installed on a Dell Latitude 7420.</p>
           <p>Testing on more hardware is still ahead, so expect rough edges. Problems are welcome in the Discord.</p>
         </div>
       </div>
@@ -208,7 +208,12 @@
             <button class="copy" type="button" data-copy="sha256sum -c krelboyneos-amd64.hybrid.iso.sha256">copy</button>
           </div>
           <p style="margin-top:14px">Then write the ISO to a USB stick with <a href="https://www.ventoy.net/">Ventoy</a>, <a href="https://etcher.balena.io/">balenaEtcher</a> or <code>dd</code>, and boot from it.</p>
-          <div class="warn-box">0.1.4 alpha: try it in a VM or on a spare machine before you trust it with your daily work.</div>
+          <p style="margin-top:14px"><strong>Installed 0.1.4 or older?</strong> Run this once to get KrelboyneOS updates through apt, signed with the <a href="krelboyneos-archive-keyring.asc">KrelboyneOS key</a>:</p>
+          <div class="code">
+            <pre><span class="p">$ </span>curl -fsSLo /tmp/krelboyneos-tools.deb https://dl.krelboyneos.org/apt/pool/main/k/krelboyneos-tools/krelboyneos-tools_0.1.5_all.deb && sudo apt install /tmp/krelboyneos-tools.deb</pre>
+            <button class="copy" type="button" data-copy="curl -fsSLo /tmp/krelboyneos-tools.deb https://dl.krelboyneos.org/apt/pool/main/k/krelboyneos-tools/krelboyneos-tools_0.1.5_all.deb &amp;&amp; sudo apt install /tmp/krelboyneos-tools.deb">copy</button>
+          </div>
+          <div class="warn-box">0.1.5 alpha: try it in a VM or on a spare machine before you trust it with your daily work.</div>
         </div>
       </div>
     </div>

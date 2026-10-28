@@ -8,7 +8,7 @@ A Debian 13 (trixie) live and installable Linux distribution for developers and 
 
 Website: [krelboyneos.org](https://krelboyneos.org)
 
-**Status: 0.1.4 alpha.** It boots and installs in a virtual machine, including with full-disk encryption, and runs installed on a Dell Latitude 7420. Testing on more hardware is still ahead.
+**Status: 0.1.5 alpha.** It boots and installs in a virtual machine, including with full-disk encryption, and runs installed on a Dell Latitude 7420. Testing on more hardware is still ahead.
 
 ## What it is
 
@@ -72,6 +72,15 @@ Each release on the [Releases page](https://github.com/grumpy-gaming/KrelboyneOS
 
 Write the ISO to a USB stick with a tool such as Ventoy, balenaEtcher or `dd`, then boot from it.
 
+## Updates
+
+KrelboyneOS's own tools (KOS Doctor, KOS Software and their helpers) come as the `krelboyneos-tools` package from the KrelboyneOS apt repository at `https://dl.krelboyneos.org/apt`, signed with the KrelboyneOS key (fingerprint `6E4F BFF2 2E77 2BF3 172D 90F6 2797 2B39 22E0 8260`). They update with the rest of the system: `sudo apt upgrade`, KOS Software's Update system button, or KOS Doctor's Fix.
+
+Installed 0.1.4 or older? Run this once to switch to the packaged tools and the update channel:
+
+    curl -fsSLo /tmp/krelboyneos-tools.deb https://dl.krelboyneos.org/apt/pool/main/k/krelboyneos-tools/krelboyneos-tools_0.1.5_all.deb
+    sudo apt install /tmp/krelboyneos-tools.deb
+
 ## Try it in a VM
 
 Create a virtual machine with at least 4 GB of RAM, 25 GB of disk and UEFI or BIOS firmware, attach the ISO as its CD-ROM, and boot. Choose Install KrelboyneOS on the desktop to install it. To encrypt the disk, tick Encrypt system on the partitioning page; you'll type the passphrase at each boot.
@@ -92,6 +101,7 @@ The finished ISO, `krelboyneos-amd64.hybrid.iso`, appears in the project folder.
 - `config/package-lists/`: the packages installed in the image
 - `config/hooks/live/`: scripts that run during the build (branding, shell, extra repos, downloads)
 - `config/includes.chroot/`: files copied into the image as they are
+- `packages/krelboyneos-tools/`: KrelboyneOS's own tools as a Debian package; `packages/build.sh` builds it (the ISO build runs it) and `packages/publish-repo.sh` signs and publishes the apt repository
 - `config/bootloaders/`: boot menu artwork
 - `docs/`: images for this README
 
