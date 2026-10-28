@@ -7,8 +7,8 @@
 # Each step ends with "|| return 1" so a failed step stops that tool and reports it.
 set -o pipefail
 
-DEV_TOOLS=(bruno)
-SEC_TOOLS=(metasploit bloodhound burp subfinder naabu dnsx katana amass chisel ligolo mitm6 theharvester netexec)
+DEV_TOOLS=(bruno playwright_mcp)
+SEC_TOOLS=(metasploit bloodhound burp agency_security subfinder naabu dnsx katana amass chisel ligolo mitm6 theharvester netexec)
 
 # KOS Software sets SUDO_ASKPASS so sudo asks for the password in a window.
 # Nothing is piped into sudo, so the password is only asked once per install.
@@ -69,6 +69,33 @@ install_burp() {
   sh "$tmp/burp-installer.sh" -q || { rm -rf "$tmp"; return 1; }
   rm -rf "$tmp"
   echo "Burp Suite is in your applications menu."
+}
+
+# --- AI agent tools: pinned to versions checked for KOS, installed in your home folder ---
+
+PLAYWRIGHT_MCP_VERSION=0.0.83
+AGENCY_COMMIT=b37b5bb33b78f2c1d6567d98e25ca818e3259219
+
+install_playwright_mcp() {
+  echo "== Playwright MCP $PLAYWRIGHT_MCP_VERSION =="
+  npm install -g --prefix ~/.local --no-fund --no-audit "@playwright/mcp@$PLAYWRIGHT_MCP_VERSION" || return 1
+  echo "Downloading Playwright's Chromium (about 700 MB)..."
+  ~/.local/bin/playwright-mcp install-browser chromium || return 1
+}
+
+# The Agency's security roles, each checked against the hash of the reviewed copy
+install_agency_security() {
+  echo "== AI agent roles: security =="
+  local sums=/usr/share/kos-software/agency-agents-security.sha256 tmp f
+  tmp=$(mktemp -d) || return 1
+  while read -r _ f; do
+    curl -fsSL "https://raw.githubusercontent.com/msitarzewski/agency-agents/$AGENCY_COMMIT/security/$f" -o "$tmp/$f" \
+      || { rm -rf "$tmp"; return 1; }
+  done < "$sums"
+  (cd "$tmp" && sha256sum --quiet -c "$sums") || { echo "A download does not match the checked copy."; rm -rf "$tmp"; return 1; }
+  mkdir -p ~/.claude/agents && install -m 644 "$tmp"/*.md ~/.claude/agents/ || { rm -rf "$tmp"; return 1; }
+  rm -rf "$tmp"
+  echo "Installed $(wc -l < "$sums") roles in ~/.claude/agents."
 }
 
 # --- Wave 3: Go release binaries and pipx tools ---
@@ -154,6 +181,8 @@ tool_label() {
     metasploit) echo "Metasploit Framework" ;;
     bloodhound) echo "BloodHound CE (needs 8 GB RAM)" ;;
     burp) echo "Burp Suite Community" ;;
+    playwright_mcp) echo "Playwright MCP (browser for AI agents)" ;;
+    agency_security) echo "AI agent roles: security" ;;
     *) echo "$1" ;;
   esac
 }
