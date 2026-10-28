@@ -18,8 +18,10 @@ mkdir -p repo/pool/main/k/krelboyneos-tools repo/dists/stable/main/binary-amd64
 cp "$deb" repo/pool/main/k/krelboyneos-tools/
 
 cd repo
+# No Packages.gz: Cloudflare caches .gz files for hours, so after a publish apt
+# got the new InRelease with the old Packages.gz and refused the mismatch.
+# Files without an extension (Packages, InRelease) are never cached.
 apt-ftparchive packages pool > dists/stable/main/binary-amd64/Packages
-gzip -9kn dists/stable/main/binary-amd64/Packages
 apt-ftparchive \
 	-o APT::FTPArchive::Release::Origin=KrelboyneOS \
 	-o APT::FTPArchive::Release::Label=KrelboyneOS \
@@ -28,7 +30,8 @@ apt-ftparchive \
 	-o APT::FTPArchive::Release::Architectures=amd64 \
 	-o APT::FTPArchive::Release::Components=main \
 	-o APT::FTPArchive::Release::Description="KrelboyneOS tools" \
-	release dists/stable > dists/stable/Release
+	release dists/stable > Release.new   # outside dists/stable, or it lists itself
+mv Release.new dists/stable/Release
 
 # Sign: InRelease (signed inline) and Release.gpg (separate signature)
 gpg --default-key "$KEY" --clearsign -o dists/stable/InRelease dists/stable/Release
@@ -43,4 +46,12 @@ fi
 
 rclone sync --s3-no-check-bucket repo "$REMOTE"
 echo "Published krelboyneos-tools $version to $REMOTE"
-curl -fsS https://dl.krelboyneos.org/apt/dists/stable/InRelease | head -n 3
+
+# Check what apt will actually download: every file the Release lists, through dl.krelboyneos.org
+url=https://dl.krelboyneos.org/apt/dists/stable
+curl -fsS "$url/InRelease" | cmp -s - repo/dists/stable/InRelease || { echo "dl.krelboyneos.org serves an old InRelease." >&2; exit 1; }
+awk '/^SHA256:/ {s=1; next} /^[^ ]/ {s=0} s {print $1, $3}' repo/dists/stable/Release | while read -r sum file; do
+	got=$(curl -fsS "$url/$file" | sha256sum | cut -d' ' -f1)
+	[ "$got" = "$sum" ] || { echo "dl.krelboyneos.org serves an old $file (a cached copy?)." >&2; exit 1; }
+done
+echo "dl.krelboyneos.org serves the new repository."
