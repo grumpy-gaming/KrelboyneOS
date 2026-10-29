@@ -82,7 +82,7 @@
 
   <section id="inside">
     <div class="section-head"><span class="prompt">$</span><h2>What's inside</h2></div>
-    <p class="section-sub">The base image ships the everyday tools. Roughly 70 more optional tools install on demand from the <strong>KOS Software</strong> app in the System menu, which also updates the system and opens GNOME Software for everything else. <strong>KOS Doctor</strong>, also in the System menu, shows SSD life, disk space, battery health and memory, and fixes common problems with one click.</p>
+    <p class="section-sub">The base image ships the everyday tools. Roughly 70 more optional tools install on demand from the <strong>KOS Software</strong> app in the System menu, which also updates the system and opens GNOME Software for everything else. <strong>KOS Doctor</strong>, also in the System menu, shows SSD life, disk space, battery health and memory, and fixes common problems with one click. <strong>Stevie</strong>, the KrelboyneOS assistant, answers questions about your computer in plain words: it checks with real tools, asks before changing anything, and runs on a free AI that stays on your machine (install it from KOS Software's AI page).</p>
     <div class="grid cols-3">
 
       <div class="window">
@@ -210,8 +210,8 @@
           <p style="margin-top:14px">Then write the ISO to a USB stick with <a href="https://www.ventoy.net/">Ventoy</a>, <a href="https://etcher.balena.io/">balenaEtcher</a> or <code>dd</code>, and boot from it.</p>
           <p style="margin-top:14px"><strong>Installed 0.1.4 or older?</strong> Run this once to get KrelboyneOS updates through apt, signed with the <a href="krelboyneos-archive-keyring.asc">KrelboyneOS key</a>:</p>
           <div class="code">
-            <pre><span class="p">$ </span>curl -fsSLo /tmp/krelboyneos-tools.deb https://dl.krelboyneos.org/apt/pool/main/k/krelboyneos-tools/krelboyneos-tools_0.1.5_all.deb && sudo apt install /tmp/krelboyneos-tools.deb</pre>
-            <button class="copy" type="button" data-copy="curl -fsSLo /tmp/krelboyneos-tools.deb https://dl.krelboyneos.org/apt/pool/main/k/krelboyneos-tools/krelboyneos-tools_0.1.5_all.deb &amp;&amp; sudo apt install /tmp/krelboyneos-tools.deb">copy</button>
+            <pre><span class="p">$ </span>curl -fsSLo /tmp/krelboyneos-tools.deb https://dl.krelboyneos.org/apt/krelboyneos-tools_latest_all.deb && sudo apt install /tmp/krelboyneos-tools.deb</pre>
+            <button class="copy" type="button" data-copy="curl -fsSLo /tmp/krelboyneos-tools.deb https://dl.krelboyneos.org/apt/krelboyneos-tools_latest_all.deb &amp;&amp; sudo apt install /tmp/krelboyneos-tools.deb">copy</button>
           </div>
           <div class="warn-box">0.1.5 alpha: try it in a VM or on a spare machine before you trust it with your daily work.</div>
         </div>

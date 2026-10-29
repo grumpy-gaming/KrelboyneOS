@@ -79,7 +79,7 @@ KrelboyneOS's own tools (KOS Doctor, KOS Software, Stevie and their helpers) com
 
 Installed 0.1.4 or older? Run this once to switch to the packaged tools and the update channel:
 
-    curl -fsSLo /tmp/krelboyneos-tools.deb https://dl.krelboyneos.org/apt/pool/main/k/krelboyneos-tools/krelboyneos-tools_0.1.5_all.deb
+    curl -fsSLo /tmp/krelboyneos-tools.deb https://dl.krelboyneos.org/apt/krelboyneos-tools_latest_all.deb
     sudo apt install /tmp/krelboyneos-tools.deb
 
 ## Try it in a VM

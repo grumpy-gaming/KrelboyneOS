@@ -16,6 +16,10 @@ deb="dist/krelboyneos-tools_${version}_all.deb"
 rm -rf repo
 mkdir -p repo/pool/main/k/krelboyneos-tools repo/dists/stable/main/binary-amd64
 cp "$deb" repo/pool/main/k/krelboyneos-tools/
+# A copy under a name that never changes, for the one-time upgrade link in the
+# README and on the website (the pool only ever holds the current version).
+# It sits outside pool/, so apt never sees it.
+cp "$deb" repo/krelboyneos-tools_latest_all.deb
 
 cd repo
 # No Packages.gz: Cloudflare caches .gz files for hours, so after a publish apt
