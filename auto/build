@@ -2,6 +2,14 @@
 
 set -e
 
+# Claude Code sessions can leave a .claude folder in whatever directory they work in;
+# one in config/includes.chroot would be copied into every user's home
+if find config -name .claude | grep -q .; then
+	echo "auto/build: remove these .claude folders from config/ first:" >&2
+	find config -name .claude >&2
+	exit 1
+fi
+
 # KrelboyneOS's own tools ship as a package; build it and let live-build install it
 packages/build.sh
 mkdir -p config/packages.chroot
