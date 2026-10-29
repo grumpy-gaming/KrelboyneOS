@@ -1,0 +1,9 @@
+#!/usr/bin/python3
+# Stevie, the KrelboyneOS assistant (https://github.com/grumpy-gaming/krel-assistant)
+import sys
+
+sys.path.insert(0, "/usr/lib/krelboyneos-tools")
+
+from stevie.cli import main  # noqa: E402
+
+sys.exit(main())

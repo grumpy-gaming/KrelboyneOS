@@ -1,5 +1,5 @@
 Package: krelboyneos-tools
-Version: 0.1.5.3
+Version: 0.1.6
 Architecture: all
 Maintainer: grumpy-gaming <krelboyneos@gmail.com>
 Section: admin
@@ -9,7 +9,9 @@ Depends: python3, python3-gi, gir1.2-gtk-3.0, sudo
 Recommends: ssl-cert, udisks2, upower, gnome-software, xfce4-genmon-plugin
 Description: KrelboyneOS's own tools and update channel
  KOS Doctor (a checkup with a health overview and one-click fixes), KOS
- Software (optional tools and system updates), their helpers, the panel's
+ Software (optional tools and system updates), Stevie (an assistant that
+ answers questions about the computer, using a local AI from KOS
+ Software), their helpers, the panel's
  network readout and the service that gives each install its own default
  SSL certificate.
  .

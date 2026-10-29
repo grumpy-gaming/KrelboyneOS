@@ -7,7 +7,7 @@
 # Each step ends with "|| return 1" so a failed step stops that tool and reports it.
 set -o pipefail
 
-DEV_TOOLS=(bruno playwright_mcp)
+DEV_TOOLS=(stevie bruno playwright_mcp)
 SEC_TOOLS=(metasploit bloodhound burp agency_security subfinder naabu dnsx katana amass chisel ligolo mitm6 theharvester netexec)
 
 # KOS Software sets SUDO_ASKPASS so sudo asks for the password in a window.
@@ -95,6 +95,28 @@ EOF
   chmod 755 ~/.local/bin/playwright-mcp || return 1
   echo "Downloading Playwright's Chromium (about 700 MB)..."
   ~/.local/bin/playwright-mcp install-browser chromium || return 1
+}
+
+# Stevie's AI: Ollama (pinned version, official installer) and Stevie's default model
+OLLAMA_VERSION=0.40.13
+STEVIE_MODEL=qwen3:4b-instruct
+install_stevie() {
+  echo "== Stevie's AI: Ollama $OLLAMA_VERSION and $STEVIE_MODEL =="
+  if ! command -v ollama > /dev/null; then
+    local tmp i
+    tmp=$(mktemp -d) || return 1
+    curl -fsSL https://ollama.com/install.sh -o "$tmp/install.sh" || { rm -rf "$tmp"; return 1; }
+    # Run as root, so the installer's own sudo calls are not needed (they cannot use a password window)
+    sudo env OLLAMA_VERSION="$OLLAMA_VERSION" sh "$tmp/install.sh" || { rm -rf "$tmp"; return 1; }
+    rm -rf "$tmp"
+    sudo usermod -aG ollama "$USER" || return 1
+    for i in $(seq 30); do
+      curl -fsS -o /dev/null http://127.0.0.1:11434/api/version && break
+      sleep 1
+    done
+  fi
+  echo "Downloading $STEVIE_MODEL (about 2.5 GB)..."
+  ollama pull "$STEVIE_MODEL" || return 1
 }
 
 # The Agency's security roles, each checked against the hash of the reviewed copy
@@ -195,6 +217,7 @@ tool_label() {
     metasploit) echo "Metasploit Framework" ;;
     bloodhound) echo "BloodHound CE (needs 8 GB RAM)" ;;
     burp) echo "Burp Suite Community" ;;
+    stevie) echo "Stevie's AI (Ollama + local model)" ;;
     playwright_mcp) echo "Playwright MCP (browser for AI agents)" ;;
     agency_security) echo "AI agent roles: security" ;;
     *) echo "$1" ;;

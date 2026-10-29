@@ -43,6 +43,7 @@ It started as a Linux From Scratch idea and became a Debian-based distro, so the
 - aircrack-ng, John the Ripper, hashcat, Hydra, sqlmap, gobuster, Nuclei
 - Bruno, Metasploit, BloodHound CE, Burp Suite Community and about 70 more optional tools install on demand from the KOS Software app (System menu), which also updates the system and opens GNOME Software for everything else
 - KOS Doctor (System menu): a checkup that shows SSD life, disk space, battery health and memory, and spots common problems, such as updates waiting, failed services or a full disk, and fixes them with one click
+- Stevie (System menu, or `stevie` in a terminal): an assistant you can ask about your computer in plain words. It checks with real tools (KOS Doctor, disk, logs, packages), and asks before changing anything. It runs on a free local AI that installs from KOS Software's AI page, so nothing leaves your computer. Source: [krel-assistant](https://github.com/grumpy-gaming/krel-assistant)
 
 **Everyday apps**
 - Firefox ESR, GIMP, Claude Desktop
@@ -74,7 +75,7 @@ Write the ISO to a USB stick with a tool such as Ventoy, balenaEtcher or `dd`, t
 
 ## Updates
 
-KrelboyneOS's own tools (KOS Doctor, KOS Software and their helpers) come as the `krelboyneos-tools` package from the KrelboyneOS apt repository at `https://dl.krelboyneos.org/apt`, signed with the KrelboyneOS key (fingerprint `6E4F BFF2 2E77 2BF3 172D 90F6 2797 2B39 22E0 8260`). They update with the rest of the system: `sudo apt upgrade`, KOS Software's Update system button, or KOS Doctor's Fix.
+KrelboyneOS's own tools (KOS Doctor, KOS Software, Stevie and their helpers) come as the `krelboyneos-tools` package from the KrelboyneOS apt repository at `https://dl.krelboyneos.org/apt`, signed with the KrelboyneOS key (fingerprint `6E4F BFF2 2E77 2BF3 172D 90F6 2797 2B39 22E0 8260`). They update with the rest of the system: `sudo apt upgrade`, KOS Software's Update system button, or KOS Doctor's Fix.
 
 Installed 0.1.4 or older? Run this once to switch to the packaged tools and the update channel:
 

@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Stevie
+Comment=Ask the KrelboyneOS assistant about your computer
+Exec=stevie
+Icon=/usr/share/krelboyneos/branding/logo.png
+Terminal=true
+Categories=System;Utility;
+Keywords=assistant;AI;help;chat;
