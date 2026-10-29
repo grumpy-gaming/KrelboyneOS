@@ -15,6 +15,9 @@ out="dist/krelboyneos-tools_${version}_all.deb"
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
 cp -a "$src" "$work/pkg"
+# Claude Code's sandbox leaves .claude/.cc-writes folders in directories it works in;
+# never ship one (0.1.5.2 to 0.1.6 installed an empty /.claude this way)
+find "$work/pkg" -name .claude -prune -exec rm -rf {} +
 size=$(du -sk --exclude=DEBIAN "$work/pkg" | cut -f1)
 echo "Installed-Size: $size" >> "$work/pkg/DEBIAN/control"
 # Standard permissions whatever the builder's umask: 755 folders and programs, 644 the rest
