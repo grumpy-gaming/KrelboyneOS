@@ -118,6 +118,12 @@ The finished ISO, `krelboyneos-amd64.hybrid.iso`, appears in the project folder.
 - Email: krelboyneos@gmail.com
 - Like the project? You can [buy me a coffee on Ko-fi](https://ko-fi.com/krelboyneos)
 
+## License
+
+KrelboyneOS's own code (the build configuration, hooks, scripts, and the krelboyneos-tools package with KOS Doctor and KOS Software) is free software under the [GNU General Public License v3.0 or later](LICENSE). You can use, change and share it; if you share a changed version, it has to stay open under the same license.
+
+The KrelboyneOS name and logo identify this project. Forks are welcome, but please give yours its own name.
+
 ## Credits
 
 Built on Debian GNU/Linux, live-build, Calamares, Xfce and the many open source projects listed above. Each keeps its own license.
